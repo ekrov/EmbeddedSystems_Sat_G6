@@ -39,7 +39,8 @@ timer_funcs.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/fpu.h
 timer_funcs.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/gpio.h
 timer_funcs.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/interrupt.h
 timer_funcs.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/uart.h
-timer_funcs.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/timers.h
+timer_funcs.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/timer.h
+timer_funcs.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h
 timer_funcs.obj: C:/ti/tivaware_c_series_2_1_4_178/inc/tm4c123gh6pm.h
 
 ../timer_funcs.c:
@@ -120,7 +121,9 @@ C:/ti/tivaware_c_series_2_1_4_178/driverlib/interrupt.h:
 
 C:/ti/tivaware_c_series_2_1_4_178/driverlib/uart.h:
 
-C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/timers.h:
+C:/ti/tivaware_c_series_2_1_4_178/driverlib/timer.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h:
 
 C:/ti/tivaware_c_series_2_1_4_178/inc/tm4c123gh6pm.h:
 

@@ -30,13 +30,19 @@
 #include "driverlib/pin_map.h"
 #include "driverlib/pwm.h"
 #include "uart_task.h"
+#include "timers.h"
+#include "timer_funcs.h"
+#include <time.h>
 
+// Queue handles
 xQueueHandle g_pKeypadQueue;
 xQueueHandle g_pI2cTempQueue;
 QueueHandle_t uart_queue;
 QueueHandle_t uart_queue_counter;
+QueueHandle_t xTimerQueue;
 
 extern xSemaphoreHandle g_BuzzerSemaphore;
+
 
 void Lcd_Port(char a)
 {
@@ -244,6 +250,7 @@ LCDTask(void *pvParameters)
     uint8_t idk;
     int16_t uart_counter;
     int8_t snum_int=0;
+    int8_t count_k_pressed=0;
     uint8_t i;
     BaseType_t sucessfulReceived;
     float Temperaturei2c;
@@ -252,9 +259,18 @@ LCDTask(void *pvParameters)
     float temp0=0;
     float packet_number_idk;
     char buffer[50];
-
+    int32_t counter = 0;
+    uint32_t previous_counter = 0;
+    char time_counter[5];
+    int32_t time_counter_int=0;
     char snum[5];
 
+    date.hour=0;
+    date.minute=0;
+    date.second=0;
+
+    int8_t initiated=0;
+    int8_t setup_time=0;
 
     //
     // Initialize the LED Toggle Delay to default value.
@@ -271,168 +287,335 @@ LCDTask(void *pvParameters)
     //
     while(1)
     {
+        if (initiated!=0){
+            if(xQueueReceive(g_pKeypadQueue, &TestKey, 1000) == pdPASS)
+            {
+                if (TestKey>0){
+                taskENTER_CRITICAL();
 
-        if(xQueueReceive(g_pKeypadQueue, &TestKey, 1000) == pdPASS)
-        {
-            if (TestKey>0){
-            taskENTER_CRITICAL();
+                 Lcd_Clear();
+                 Lcd_Write_Char('K');
+                 Lcd_Write_Char(':');
+                 Lcd_Write_Char(' ');
+                 if (TestKey<10){
+                     Lcd_Write_Char(TestKey + '0');
+                 }
+                 else
+                 {
+                     Lcd_Write_Char(TestKey);
+                 }
+                taskEXIT_CRITICAL();
 
-             Lcd_Clear();
-             Lcd_Write_Char('K');
-             Lcd_Write_Char(':');
-             Lcd_Write_Char(' ');
-             if (TestKey<10){
-                 Lcd_Write_Char(TestKey + '0');
-             }
-             else
-             {
-                 Lcd_Write_Char(TestKey);
-             }
-            taskEXIT_CRITICAL();
+                idk=0;
+               xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
 
-            idk=0;
-           xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
-
-            }
-
-
-            switch(TestKey) {
-              case 1:
-                  if(xQueueReceive(g_pI2cTempQueue, &Temperaturei2c, 100) == pdPASS)
-                  {
-                      taskENTER_CRITICAL();
-                      //dezenas
-                     temp2=Temperaturei2c/10;
-
-                     // unidades
-                     temp1=Temperaturei2c-((int) temp2*10);
-
-                     //decimal
-                     temp0= (int)temp1;
-                     temp0=temp1-temp0;
-                     temp0=temp0*10.0;
-                     temp0=round(temp0);
-
-                     Lcd_Write_Char(' ');
-                     Lcd_Write_Char('T');
-                     Lcd_Write_Char(':');
-                     Lcd_Write_Char(temp2+'0');
-                     Lcd_Write_Char(temp1+'0');
-                     Lcd_Write_Char('.');
-                     Lcd_Write_Char(temp0+'0');
-                      taskEXIT_CRITICAL();
+                }
 
 
-                      vTaskDelay( 500 / portTICK_RATE_MS);
+                switch(TestKey) {
+                  case 1:
+                      if(xQueueReceive(g_pI2cTempQueue, &Temperaturei2c, 100) == pdPASS)
+                      {
+                          taskENTER_CRITICAL();
+                          //dezenas
+                         temp2=Temperaturei2c/10;
+
+                         // unidades
+                         temp1=Temperaturei2c-((int) temp2*10);
+
+                         //decimal
+                         temp0= (int)temp1;
+                         temp0=temp1-temp0;
+                         temp0=temp0*10.0;
+                         temp0=round(temp0);
+
+                         Lcd_Write_Char(' ');
+                         Lcd_Write_Char('T');
+                         Lcd_Write_Char(':');
+                         Lcd_Write_Char(temp2+'0');
+                         Lcd_Write_Char(temp1+'0');
+                         Lcd_Write_Char('.');
+                         Lcd_Write_Char(temp0+'0');
+                          taskEXIT_CRITICAL();
 
 
-                  }
-
-                // code block
-                break;
-              case 2:
-                // code block
-                  xSemaphoreGive(g_BuzzerSemaphore);
-                  vTaskDelay( 500 / portTICK_RATE_MS);
-
-                break;
-              case 3:
-                  //Recebe dados da fila
-                  sucessfulReceived = xQueueReceive(uart_queue, &buffer, 100);
-
-                  if (sucessfulReceived == pdTRUE)
-                  {
-                      //packet_number_idk=packet_division(&buffer, 1);
-                      taskENTER_CRITICAL();
-                      Lcd_Clear();
-                      //for (i = 0; i < 20; i++)
-                      //    Lcd_Write_Char(buffer[i]);
-                      Lcd_Write_String("Packet nr :");
-                      for (i = 4; i < 8; i++)
-                           Lcd_Write_Char(buffer[i]);
-                      //Lcd_Write_Float(packet_number);
-                      //Lcd_Write_Char(packet_number_idk+'0');
-
-                      taskEXIT_CRITICAL();
-                    //vTaskDelay( 1 / portTICK_RATE_MS);
+                          vTaskDelay( 1000 / portTICK_RATE_MS);
 
 
-                  }
-                  else
-                  {
-                      taskENTER_CRITICAL();
-                      Lcd_Clear();
-                      Lcd_Write_Char('N');
-                      Lcd_Write_Char('O');
-                      Lcd_Write_Char(' ');
-                      Lcd_Write_Char('D');
-                      Lcd_Write_Char('A');
-                      Lcd_Write_Char('T');
-                      Lcd_Write_Char('A');
-
-                      taskEXIT_CRITICAL();
-
-
-                  }
-                  vTaskDelay( 500 / portTICK_RATE_MS);
-
-
-
-                break;
-              case 4:
-                  xQueueReceive(uart_queue_counter, &uart_counter, 100);
-                  taskENTER_CRITICAL();
-                  Lcd_Clear();
-                  Lcd_Write_String("Received pckts:");
-                  // Convert 123 to string [buf]
-                  if (uart_counter>0){
-                      sprintf(snum, "%d", uart_counter);
-                  }
-                  //itoa(uart_counter, snum, 10);
-                  for (i = 0; i < 5; i++)
-                  {
-                      snum_int=snum[i]-'0';
-                      if (snum_int<=9 && snum_int>=0){
-                        Lcd_Write_Char(snum[i]);
                       }
 
-                  }
-                  //Lcd_Write_String("        ");
-                  taskEXIT_CRITICAL();
+                    // code block
+                    break;
+                  case 2:
+                    // code block
+                      xSemaphoreGive(g_BuzzerSemaphore);
+                      vTaskDelay( 1000 / portTICK_RATE_MS);
 
-                  vTaskDelay( 500 / portTICK_RATE_MS);
+                    break;
+                  case 3:
+                      //Recebe dados da fila
+                      sucessfulReceived = xQueueReceive(uart_queue, &buffer, 100);
 
-                  break;
-              case 0:
-                  taskENTER_CRITICAL();
-                 Lcd_Clear();
-                 Lcd_Write_Char('-');
-                 Lcd_Write_Char('-');
-                 Lcd_Write_Char('-');
-                 Lcd_Write_Char('-');
-                 Lcd_Write_Char('P');
-                 Lcd_Write_Char('R');
-                 Lcd_Write_Char('E');
-                 Lcd_Write_Char('S');
-                 Lcd_Write_Char('S');
-                 Lcd_Write_Char(' ');
-                 Lcd_Write_Char('A');
-                 Lcd_Write_Char(' ');
-                 Lcd_Write_Char('K');
-                 Lcd_Write_Char('E');
-                 Lcd_Write_Char('Y');
-                 Lcd_Write_Char('-');
-                 Lcd_Write_Char('-');
-                 Lcd_Write_Char('-');
-                 Lcd_Write_Char('-');
-                 taskEXIT_CRITICAL();
-                  break;
+                      if (sucessfulReceived == pdTRUE)
+                      {
+                          //packet_number_idk=packet_division(&buffer, 1);
+                          taskENTER_CRITICAL();
+                          Lcd_Clear();
+                          //for (i = 0; i < 20; i++)
+                          //    Lcd_Write_Char(buffer[i]);
+                          Lcd_Write_String("Packet nr :");
+                          for (i = 4; i < 8; i++)
+                               Lcd_Write_Char(buffer[i]);
+                          //Lcd_Write_Float(packet_number);
+                          //Lcd_Write_Char(packet_number_idk+'0');
 
-              default:
-                  vTaskDelay( 1000 / portTICK_RATE_MS);
+                          taskEXIT_CRITICAL();
+                        //vTaskDelay( 1 / portTICK_RATE_MS);
 
-                // code block
+
+                      }
+                      else
+                      {
+                          taskENTER_CRITICAL();
+                          Lcd_Clear();
+                          Lcd_Write_Char('N');
+                          Lcd_Write_Char('O');
+                          Lcd_Write_Char(' ');
+                          Lcd_Write_Char('D');
+                          Lcd_Write_Char('A');
+                          Lcd_Write_Char('T');
+                          Lcd_Write_Char('A');
+
+                          taskEXIT_CRITICAL();
+
+
+                      }
+                      vTaskDelay( 1000 / portTICK_RATE_MS);
+
+
+
+                    break;
+                  case 4:
+                      xQueueReceive(uart_queue_counter, &uart_counter, 100);
+                      taskENTER_CRITICAL();
+                      Lcd_Clear();
+                      Lcd_Write_String("Received pckts:");
+                      // Convert 123 to string [buf]
+                      if (uart_counter>0){
+                          sprintf(snum, "%d", uart_counter);
+                      }
+                      //itoa(uart_counter, snum, 10);
+                      for (i = 0; i < 5; i++)
+                      {
+                          snum_int=snum[i]-'0';
+                          if (snum_int<=9 && snum_int>=0){
+                            Lcd_Write_Char(snum[i]);
+                          }
+
+                      }
+                      //Lcd_Write_String("        ");
+                      taskEXIT_CRITICAL();
+
+                      vTaskDelay( 1000 / portTICK_RATE_MS);
+
+                      break;
+
+                  case 5:
+
+                      if(xQueuePeek(xTimerQueue, &counter, 100) == pdPASS)
+                        {
+
+                          date.hour=counter/3600;
+                          date.minute=(counter-date.hour*3600)/60;
+                          date.second=(counter-date.minute*60-date.hour*3600);
+
+
+                        taskENTER_CRITICAL();
+                        Lcd_Clear();
+                        Lcd_Write_String("Time:");
+
+                          sprintf(time_counter, "%d", date.hour);
+                          //itoa(uart_counter, snum, 10);
+                          for (i = 0; i < 5; i++)
+                          {
+                              time_counter_int=time_counter[i]-'0';
+                              if (time_counter_int<=9 && time_counter_int>=0){
+                                Lcd_Write_Char(time_counter[i]);
+                              }
+
+                          }
+                          Lcd_Write_String("h ");
+
+                          sprintf(time_counter, "%d", date.minute);
+                            //itoa(uart_counter, snum, 10);
+                            for (i = 0; i < 5; i++)
+                            {
+                                time_counter_int=time_counter[i]-'0';
+                                if (time_counter_int<=9 && time_counter_int>=0){
+                                  Lcd_Write_Char(time_counter[i]);
+                                }
+
+                            }
+                            Lcd_Write_String("m ");
+
+                            sprintf(time_counter, "%d", date.second);
+                            //itoa(uart_counter, snum, 10);
+                            for (i = 0; i < 5; i++)
+                            {
+                                time_counter_int=time_counter[i]-'0';
+                                if (time_counter_int<=9 && time_counter_int>=0){
+                                  Lcd_Write_Char(time_counter[i]);
+                                }
+
+                            }
+                            Lcd_Write_Char('s');
+                        taskEXIT_CRITICAL();
+
+
+                        vTaskDelay( 1000 / portTICK_RATE_MS);
+                        }
+
+                      break;
+                  case 0:
+                      taskENTER_CRITICAL();
+                     Lcd_Clear();
+                     Lcd_Write_Char('-');
+                     Lcd_Write_Char('-');
+                     Lcd_Write_Char('-');
+                     Lcd_Write_Char('-');
+                     Lcd_Write_Char('P');
+                     Lcd_Write_Char('R');
+                     Lcd_Write_Char('E');
+                     Lcd_Write_Char('S');
+                     Lcd_Write_Char('S');
+                     Lcd_Write_Char(' ');
+                     Lcd_Write_Char('A');
+                     Lcd_Write_Char(' ');
+                     Lcd_Write_Char('K');
+                     Lcd_Write_Char('E');
+                     Lcd_Write_Char('Y');
+                     Lcd_Write_Char('-');
+                     Lcd_Write_Char('-');
+                     Lcd_Write_Char('-');
+                     Lcd_Write_Char('-');
+                     taskEXIT_CRITICAL();
+                      break;
+
+                  default:
+                      vTaskDelay( 1000 / portTICK_RATE_MS);
+
+                    // code block
+                }
             }
+            TestKey=200;
+
+        }else{
+
+            if (setup_time==0){
+                // Start the system, by defining the date and the time
+                if (count_k_pressed<1 ){
+                    taskENTER_CRITICAL();
+                    Lcd_Clear();
+                    Lcd_Write_String("Insert: MM--DD--YYYY");
+                    taskEXIT_CRITICAL();
+                }
+                if (count_k_pressed<12){
+                    Lcd_Set_Cursor(1,(9+count_k_pressed));
+                }
+
+
+                if(xQueueReceive(g_pKeypadQueue, &TestKey, 1) == pdPASS)
+                {
+                    if (TestKey<200){
+
+                        if (TestKey<10 && count_k_pressed<12){
+                            taskENTER_CRITICAL();
+                             Lcd_Write_Char(TestKey + '0');
+                             taskEXIT_CRITICAL();
+                             count_k_pressed=count_k_pressed+1;
+
+                             if (count_k_pressed==1)
+                                     date.day=TestKey*10;
+                             if (count_k_pressed==2)
+                                     date.day=date.day+TestKey;
+                             if (count_k_pressed==4)
+                                     date.month=TestKey*10;
+                             if (count_k_pressed==5)
+                                     date.month=date.month+TestKey;
+                             if (count_k_pressed==8)
+                                     date.month=TestKey;
+                             if (count_k_pressed==9)
+                                     date.year=TestKey*10;
+                         }
+
+                        vTaskDelay( 100 / portTICK_RATE_MS);
+                    }
+                }
+                if (count_k_pressed==2)
+                    count_k_pressed=4;
+                if (count_k_pressed==6)
+                    count_k_pressed=8;
+                if (count_k_pressed==12)
+                {
+                    setup_time=1;
+                    count_k_pressed=0;
+
+                    /*initiated=1;
+                    idk=0;
+                    xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);*/
+                }
+            }else{
+                // Start the system, by defining the date and the time
+                if (count_k_pressed<1 ){
+                    taskENTER_CRITICAL();
+                    Lcd_Clear();
+                    Lcd_Write_String("Insert: HH--MM--SS");
+                    taskEXIT_CRITICAL();
+                }
+                if (count_k_pressed<12){
+                    Lcd_Set_Cursor(1,(9+count_k_pressed));
+                }
+
+
+                if(xQueueReceive(g_pKeypadQueue, &TestKey, 1) == pdPASS)
+                {
+                    if (TestKey<200){
+
+                        if (TestKey<10 && count_k_pressed<10){
+                            taskENTER_CRITICAL();
+                             Lcd_Write_Char(TestKey + '0');
+                             taskEXIT_CRITICAL();
+                             count_k_pressed=count_k_pressed+1;
+
+                             if (count_k_pressed==1)
+                                     date.hour=TestKey*10;
+                             if (count_k_pressed==2)
+                                     date.hour=date.hour+TestKey;
+                             if (count_k_pressed==4)
+                                     date.minute=TestKey*10;
+                             if (count_k_pressed==5)
+                                     date.minute=date.minute+TestKey;
+                             if (count_k_pressed==8)
+                                     date.second=TestKey*10;
+                             if (count_k_pressed==9)
+                                     date.second=date.second+TestKey;
+                         }
+
+                        vTaskDelay( 100 / portTICK_RATE_MS);
+                    }
+                }
+                if (count_k_pressed==2)
+                    count_k_pressed=4;
+                if (count_k_pressed==6)
+                    count_k_pressed=8;
+                if (count_k_pressed==10)
+                {
+                    initiated=1;
+                    idk=0;
+                    xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
+                }
+            }
+
         }
 
         vTaskDelayUntil(&ui32WakeTime, 400 / portTICK_RATE_MS);
@@ -470,10 +653,26 @@ LCDTaskInit(void)
    uart_queue = xQueueCreate(UART_QUEUE_LENGTH, UART_SIZE);
    uart_queue_counter = xQueueCreate(UART_QUEUE_counter_LENGTH, UART_counter_SIZE);
 
-   TestKey=0;
+   // -- TIMER --
+
+   // Create the timer queue
+   xTimerQueue = xQueueCreate(1, sizeof(int32_t));
+
+   // Configure Timer0
+   Timer0A_Init();
+   /*
+   // Create the timer
+   TimerHandle_t xTimer = xTimerCreate("HardwareTimer", pdMS_TO_TICKS(1000), pdTRUE, 0, vTimerCallback);
+
+   // Start the timer
+   xTimerStart(xTimer, portMAX_DELAY);
+   */
+   // --
+   TestKey=200;
    xQueueSend(g_pKeypadQueue, &TestKey, 100 / portTICK_RATE_MS);
 
    xQueueOverwrite(uart_queue_counter, &TestKey);
+
 
 
    // Verificação temp_queue e buzzer_queue
@@ -496,105 +695,4 @@ LCDTaskInit(void)
     // Success.
     //
     return(0);
-}
-
-float packet_division(char *buffer, int number)
-{
-    //char buffer[];
-    int i = 0;
-    char packet_number[6];
-
-
-    float packet_number_f;
-
-    //copiar o packet number
-    for (i = 3; buffer[i] != ','; i++)
-    {
-        packet_number[i - 3] = buffer[i];
-    }
-
-    // Adiciona o caracter nulo ao final da string
-    packet_number[5] = '\0';
-    packet_number_f = atof(packet_number);
-
-    i++;
-
-    //copiar o light sensor
-    /*
-    for (; buffer[i] != ','; i++)
-    {
-        light_sensor[i - 9] = buffer[i];
-    }
-    // Adiciona o caracter nulo ao final da string
-    light_sensor[3] = '\0';
-    packet.light_sensor = atof(light_sensor);
-
-    //copiar a temperatura do CPU
-    i++;
-    for (; buffer[i] != ','; i++)
-    {
-        CPU_temp[i - 13] = buffer[i];
-    }
-    // Adiciona o caracter nulo ao final da string
-    CPU_temp[3] = '\0';
-    packet.CPU_temp = atof(CPU_temp);
-
-    //copiar a temperatura média do satélite
-    i++;
-    for (; buffer[i] != ','; i++)
-    {
-        average_temp[i - 17] = buffer[i];
-    }
-    // Adiciona o caracter nulo ao final da string
-    average_temp[3] = '\0';
-    packet.average_temp = atof(average_temp);
-
-    //copiar a humidade
-    i++;
-    for (; buffer[i] != ','; i++)
-    {
-        humidity[i - 21] = buffer[i];
-    }
-    // Adiciona o caracter nulo ao final da string
-    humidity[3] = '\0';
-    packet.humidity = atof(humidity);
-
-    //copiar a aceleração
-    i++;
-    for (; buffer[i] != ','; i++)
-    {
-        acceleration[i - 25] = buffer[i];
-    }
-    // Adiciona o caracter nulo ao final da string
-    acceleration[3] = '\0';
-    packet.acceleration = atof(acceleration);
-
-    //copiar a pressão
-    i++;
-    for (; buffer[i] != ';'; i++)
-    {
-        pressure[i - 29] = buffer[i];
-    }
-    // Adiciona o caracter nulo ao final da string
-    pressure[4] = '\0';
-    packet.pressure = atof(pressure);
-
-    switch (number)
-    {
-    case PACKET_NUMBER:
-        return packet.packet_number;
-    case LIGHT_SENSOR:
-        return packet.light_sensor;
-    case CPU_TEMP:
-        return packet.CPU_temp;
-    case AVERAGE_TEMP:
-        return packet.average_temp;
-    case HUMIDITY:
-        return packet.humidity;
-    case ACCELERATION:
-        return packet.acceleration;
-    case PRESSURE:
-        return packet.pressure;
-    }*/
-    return packet_number_f;
 }

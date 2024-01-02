@@ -42,8 +42,6 @@ int32_t UART_receive(void){
     uart_received=UARTCharGetNonBlocking(UART1_BASE);
     return uart_received;
 
-
-
 }
 
 static void
@@ -53,7 +51,7 @@ UartTaskReceive(void *pvParameters)
         char receivedChar;
         char buffer[buffer_size];
         int charP = 0;
-        int16_t uart_counter=0;
+        int32_t uart_counter=0;
 
         while (1)
         {
@@ -78,7 +76,7 @@ UartTaskReceive(void *pvParameters)
                     charP = 0;
                     // Adiciona o caracter nulo ao final da string
                     buffer[i] = '\0';
-                    xQueueSend(uart_queue, &buffer, portMAX_DELAY);
+                    xQueueSendToFront(uart_queue, &buffer, portMAX_DELAY);
                     //xQueueReceive(uart_queue_counter, &uart_counter, 100);
                     uart_counter=uart_counter+1;
                     xQueueOverwrite(uart_queue_counter, &uart_counter);

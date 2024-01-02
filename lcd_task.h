@@ -26,6 +26,19 @@
 #define D6 GPIO_PIN_6 //Bit 6
 #define D7 GPIO_PIN_7 //Bit 7
 
+
+typedef struct Date
+{
+    int16_t month;
+    int16_t day;
+    int16_t year;
+    int16_t hour;
+    int16_t minute;
+    int16_t second;
+} Date;
+
+Date date;
+
 // function prototypes
 void Lcd_Port(char a);
 void Lcd_Cmd(char a);

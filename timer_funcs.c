@@ -11,35 +11,41 @@
 QueueHandle_t xTimerQueue;
 
 // Counter variable
-static uint32_t counter = 0;
+uint32_t counter = 0;
 
 // Initialize Timer0A
 void Timer0A_Init(void) {
-    // Enable the Timer0 peripheral
-    SYSCTL_RCGCTIMER_R |= 0x01;
+    // Habilita o periférico do Timer 0
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
 
-    // Disable Timer0A before configuration
-    TIMER0_CTL_R = 0x00000000;
+    // Configura o Timer 0 para operar em modo periódico (up-count) e habilita o timer
+    TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
+    TimerEnable(TIMER0_BASE, TIMER_A);
 
-    // Configure Timer0A in periodic mode
-    TIMER0_CFG_R = 0x00;  // 32-bit mode
-    TIMER0_TAMR_R = 0x02;  // Periodic mode
-    TIMER0_TAILR_R = 16000000 - 1;  // Assuming a 16MHz clock, generates 1Hz interrupts
+    // Define o valor de recarga do Timer 0 para 10 segundo
+    TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet());
 
-    // Enable Timer0A interrupt
-    TIMER0_IMR_R |= 0x01;
-    NVIC_EN0_R |= 1 << 19;  // Enable Timer0A interrupt in NVIC
+    // Registra a função de tratamento de interrupção para o Timer 0
+    TimerIntRegister(TIMER0_BASE, TIMER_A, timer_count_time);
 
-    // Set the priority of the Timer0A interrupt
-    NVIC_PRI4_R = (NVIC_PRI4_R & 0xFFFFFF00) | 0x20;  // Adjust priority as needed
+    // Habilita a interrupção de estouro do Timer 0
+    TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
 
-    // Enable Timer0A
-    TIMER0_CTL_R |= 0x01;
+    // Habilita as interrupções globalmente
+    IntMasterEnable();
+
 }
+//Função que adiciona um segundo à contagem
+void timer_count_time(void)
+{
+    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
 
-// Timer callback function
-void vTimerCallback(TimerHandle_t xTimer) {
-    // Increment a value and send it to the queue
+    TimerLoadSet(TIMER0_BASE, TIMER_A, SysCtlClockGet());
+
     counter++;
-    xQueueSendToBackFromISR(xTimerQueue, &counter, NULL);
+    xQueueOverwriteFromISR(xTimerQueue, &counter, NULL);
+
+    BaseType_t xHigherPriorityTaskWoken = pdTRUE;
+
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

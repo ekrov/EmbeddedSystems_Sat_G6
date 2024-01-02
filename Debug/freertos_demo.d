@@ -53,7 +53,8 @@ freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/fpu.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/interrupt.h
 freertos_demo.obj: ../timer_funcs.h
 freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h
-freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/timers.h
+freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/timer.h
+freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h
 
 ../freertos_demo.c:
 
@@ -161,5 +162,7 @@ C:/ti/tivaware_c_series_2_1_4_178/driverlib/interrupt.h:
 
 D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h:
 
-C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/timers.h:
+C:/ti/tivaware_c_series_2_1_4_178/driverlib/timer.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h:
 

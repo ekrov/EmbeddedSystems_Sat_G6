@@ -34,12 +34,15 @@
 #include "driverlib/gpio.h"
 #include "driverlib/interrupt.h"
 #include "driverlib/uart.h"
-#include "timers.h"
+
+#include "driverlib/timer.h"
+
+#include <time.h>
 #include "inc/tm4c123gh6pm.h"  // TivaWare header for TM4C123GXL
 
 
 // Timer callback
-void vTimerCallback(TimerHandle_t xTimer);
+void timer_count_time(void);
 void Timer0A_Init(void);
 
 

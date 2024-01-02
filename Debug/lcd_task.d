@@ -56,6 +56,12 @@ lcd_task.obj: C:/ti/tivaware_c_series_2_1_4_178/inc/hw_ints.h
 lcd_task.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/fpu.h
 lcd_task.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/interrupt.h
 lcd_task.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/uart.h
+lcd_task.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/timers.h
+lcd_task.obj: ../timer_funcs.h
+lcd_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h
+lcd_task.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/timer.h
+lcd_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h
+lcd_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h
 
 ../lcd_task.c:
 
@@ -168,4 +174,16 @@ C:/ti/tivaware_c_series_2_1_4_178/driverlib/fpu.h:
 C:/ti/tivaware_c_series_2_1_4_178/driverlib/interrupt.h:
 
 C:/ti/tivaware_c_series_2_1_4_178/driverlib/uart.h:
+
+C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/timers.h:
+
+../timer_funcs.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h:
+
+C:/ti/tivaware_c_series_2_1_4_178/driverlib/timer.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h:
 
