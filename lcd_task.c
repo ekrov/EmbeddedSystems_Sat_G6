@@ -254,6 +254,7 @@ LCDTask(void *pvParameters)
     int8_t snum_int=0;
     int8_t count_k_pressed=0;
     uint8_t i;
+    uint8_t j;
     BaseType_t sucessfulReceived;
     float Temperaturei2c;
     float temp2=0;
@@ -261,6 +262,7 @@ LCDTask(void *pvParameters)
     float temp0=0;
     float packet_number_idk;
     char buffer[50];
+    char buffer_all_matrix[20][50];
     int32_t counter = 0;
     uint32_t previous_counter = 0;
     char time_counter[5];
@@ -541,6 +543,17 @@ LCDTask(void *pvParameters)
                                                           //Recebe dados da fila
                                                            sucessfulReceived = xQueueReceive(uart_queue, &buffer, 100);
 
+                                                           for (j=0;j<50;j++){
+                                                               buffer_all_matrix[i][j]=buffer[j];
+                                                           }
+
+                                                           // re-send the received buffer to queue to the back
+                                                          xQueueSendToBack(uart_queue, &buffer, portMAX_DELAY);
+                                                      }
+                                                      for (i = 0; i < 20; i++){
+                                                          for (j=0;j<50;j++){
+                                                              buffer[j]=buffer_all_matrix[i][j];
+                                                          }
                                                            if (sucessfulReceived == pdTRUE)
                                                            {
                                                                // if packet numbers == keys pressed
@@ -582,7 +595,7 @@ LCDTask(void *pvParameters)
                                                                // if packet numbers != keys pressed
 
                                                                // re-send the received buffer to queue to the back
-                                                               xQueueSendToBack(uart_queue, &buffer, portMAX_DELAY);
+                                                               //xQueueSendToBack(uart_queue, &buffer, portMAX_DELAY);
                                                                if (flag_receiving_packet==1){
                                                                    taskENTER_CRITICAL();
                                                                    Lcd_Clear();

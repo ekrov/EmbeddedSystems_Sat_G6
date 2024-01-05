@@ -16,7 +16,7 @@
 #include "inc/tm4c123gh6pm.h"
 #include "inc/hw_memmap.h"
 
-#define LCDTASKSTACKSIZE        256        // Stack size in words
+#define LCDTASKSTACKSIZE        1536        // Stack size in words
 
 #define RS GPIO_PIN_3 //Register Select (Character or Instruction)
 #define EN GPIO_PIN_2 //LCD Clock Enable PIN, Falling Edge Triggered
