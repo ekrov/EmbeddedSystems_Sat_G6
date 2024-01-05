@@ -43,7 +43,7 @@ QueueHandle_t xTimerQueue;
 
 extern xSemaphoreHandle g_BuzzerSemaphore;
 
-
+int32_t packet_temp;
 void Lcd_Port(char a)
 {
 if(a & 1)
@@ -247,6 +247,8 @@ LCDTask(void *pvParameters)
     portTickType ui32WakeTime;
     uint32_t ui32LEDToggleDelay;
     uint8_t TestKey;
+    int32_t keys_Packet[4];
+    //int32_t packet_temp;
     uint8_t idk;
     int16_t uart_counter;
     int8_t snum_int=0;
@@ -269,9 +271,19 @@ LCDTask(void *pvParameters)
     date.minute=0;
     date.second=0;
 
+    date.starting_hour=0;
+    date.starting_minute=0;
+    date.starting_second=0;
+
+
+    int16_t hour_received;
+    int16_t minute_received;
+    int16_t second_received;
+
     int8_t initiated=0;
     int8_t setup_time=0;
 
+    int8_t flag_receiving_packet=0;
     //
     // Initialize the LED Toggle Delay to default value.
     //
@@ -353,6 +365,7 @@ LCDTask(void *pvParameters)
 
                     break;
                   case 3:
+
                       //Recebe dados da fila
                       sucessfulReceived = xQueueReceive(uart_queue, &buffer, 100);
 
@@ -363,7 +376,17 @@ LCDTask(void *pvParameters)
                           Lcd_Clear();
                           //for (i = 0; i < 20; i++)
                           //    Lcd_Write_Char(buffer[i]);
-                          Lcd_Write_String("Packet nr :");
+                          //Lcd_Write_String("Packet nr :");
+
+//                          Lcd_Write_Char('P');
+//                          Lcd_Write_Char('a');
+//                          Lcd_Write_Char('c');
+//                          Lcd_Write_Char('k');
+//                          Lcd_Write_Char('e');
+//                          Lcd_Write_Char('t');
+//                          Lcd_Write_Char(' ');
+
+                          Lcd_Write_String("Packet:");
                           for (i = 4; i < 8; i++)
                                Lcd_Write_Char(buffer[i]);
                           //Lcd_Write_Float(packet_number);
@@ -425,10 +448,13 @@ LCDTask(void *pvParameters)
                       if(xQueuePeek(xTimerQueue, &counter, 100) == pdPASS)
                         {
 
-                          date.hour=counter/3600;
-                          date.minute=(counter-date.hour*3600)/60;
-                          date.second=(counter-date.minute*60-date.hour*3600);
+                          hour_received=(counter/3600);
+                          minute_received=(counter-hour_received*3600)/60;
+                          second_received=(counter-minute_received*60-hour_received*3600);
 
+                          date.hour=hour_received+date.starting_hour;
+                          date.minute=minute_received+date.starting_hour;
+                          date.second=second_received+date.starting_second;
 
                         taskENTER_CRITICAL();
                         Lcd_Clear();
@@ -474,6 +500,116 @@ LCDTask(void *pvParameters)
 
                         vTaskDelay( 1000 / portTICK_RATE_MS);
                         }
+
+                      break;
+
+                  case 6:
+                      taskENTER_CRITICAL();
+                      Lcd_Clear();
+                      Lcd_Write_String("Pckt: ");
+                      taskEXIT_CRITICAL();
+                      flag_receiving_packet=1;
+
+                      // Initially a 0 is sent, this safeguards that
+                      if(xQueueReceive(g_pKeypadQueue, &TestKey, (5000 / portTICK_RATE_MS)) == pdPASS){
+                          vTaskDelay( 2 / portTICK_RATE_MS);
+                      }
+                      // Selecionar packet a observar
+                      while(flag_receiving_packet==1){
+                          if(xQueueReceive(g_pKeypadQueue, &TestKey, (5000 / portTICK_RATE_MS)) == pdPASS){
+                                  keys_Packet[0]=TestKey;
+                                  taskENTER_CRITICAL();
+                                  Lcd_Write_Char(TestKey+'0');
+                                  taskEXIT_CRITICAL();
+                                  if(xQueueReceive(g_pKeypadQueue, &TestKey, (5000 / portTICK_RATE_MS)) == pdPASS){
+                                        keys_Packet[1]=TestKey;
+                                        taskENTER_CRITICAL();
+                                          Lcd_Write_Char(TestKey+'0');
+                                          taskEXIT_CRITICAL();
+                                        if(xQueueReceive(g_pKeypadQueue, &TestKey, (5000 / portTICK_RATE_MS)) == pdPASS){
+                                            keys_Packet[2]=TestKey;
+                                            taskENTER_CRITICAL();
+                                              Lcd_Write_Char(TestKey+'0');
+                                              taskEXIT_CRITICAL();
+                                                if(xQueueReceive(g_pKeypadQueue, &TestKey, (5000 / portTICK_RATE_MS)) == pdPASS){
+                                                        keys_Packet[3]=TestKey;
+                                                        taskENTER_CRITICAL();
+                                                      Lcd_Write_Char(TestKey+'0');
+                                                      taskEXIT_CRITICAL();
+
+                                                      for (i = 0; i < 20; i++){
+                                                          //Recebe dados da fila
+                                                           sucessfulReceived = xQueueReceive(uart_queue, &buffer, 100);
+
+                                                           if (sucessfulReceived == pdTRUE)
+                                                           {
+                                                               // if packet numbers == keys pressed
+                                                               packet_temp=buffer[4]-'0';
+                                                               if (packet_temp==keys_Packet[0] || buffer[4]==32){
+
+                                                                   packet_temp=buffer[5]-'0';
+                                                                   if (packet_temp==keys_Packet[1] || buffer[5]==32){
+
+                                                                       packet_temp=buffer[6]-'0';
+
+                                                                       if (packet_temp==keys_Packet[2] || buffer[6]==32){
+
+                                                                           packet_temp=buffer[7]-'0';
+
+                                                                           if (packet_temp==TestKey){
+                                                                               vTaskDelay( 1 / portTICK_RATE_MS);
+                                                                               //show packet on lcd
+                                                                              taskENTER_CRITICAL();
+                                                                              Lcd_Clear();
+                                                                              //for (i = 0; i < 20; i++)
+                                                                              //    Lcd_Write_Char(buffer[i]);
+                                                                              Lcd_Write_String("Packet nr :");
+                                                                              for (i = 4; i < 12; i++)
+                                                                               Lcd_Write_Char(buffer[i]);
+                                                                              //Lcd_Write_Float(packet_number);
+                                                                              //Lcd_Write_Char(packet_number_idk+'0');
+
+                                                                              taskEXIT_CRITICAL();
+
+                                                                              vTaskDelay( 1000 / portTICK_RATE_MS);
+                                                                              flag_receiving_packet=0;
+                                                                              idk=0;
+                                                                            xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
+                                                                           }
+                                                                       }
+                                                                   }
+                                                               }
+                                                               // if packet numbers != keys pressed
+
+                                                               // re-send the received buffer to queue to the back
+                                                               xQueueSendToBack(uart_queue, &buffer, portMAX_DELAY);
+                                                               if (flag_receiving_packet==1){
+                                                                   taskENTER_CRITICAL();
+                                                                   Lcd_Clear();
+                                                                   Lcd_Write_String("Didnt find in ");
+                                                                   if (i<=9){
+                                                                       Lcd_Write_Char(i+'0');}
+                                                                   else{
+                                                                       Lcd_Write_Char((i/10)+'0');
+                                                                       Lcd_Write_Char((i-((i/10)*10))+'0');}
+
+                                                                   taskEXIT_CRITICAL();
+                                                                   vTaskDelay( 1000 / portTICK_RATE_MS);
+                                                               }
+                                                           }
+                                                       }
+                                                      flag_receiving_packet=0;
+
+                                                      vTaskDelay( 1 / portTICK_RATE_MS);
+                                        }
+                                      }
+                                  }
+                          }
+                      }
+
+                       //vTaskDelay( 1000 / portTICK_RATE_MS);
+                       idk=0;
+                       xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
 
                       break;
                   case 0:
@@ -588,17 +724,17 @@ LCDTask(void *pvParameters)
                              count_k_pressed=count_k_pressed+1;
 
                              if (count_k_pressed==1)
-                                     date.hour=TestKey*10;
+                                     date.starting_hour=TestKey*10;
                              if (count_k_pressed==2)
-                                     date.hour=date.hour+TestKey;
+                                     date.starting_hour=date.starting_hour+TestKey;
                              if (count_k_pressed==4)
-                                     date.minute=TestKey*10;
+                                     date.starting_minute=TestKey*10;
                              if (count_k_pressed==5)
-                                     date.minute=date.minute+TestKey;
+                                     date.starting_minute=date.starting_minute+TestKey;
                              if (count_k_pressed==8)
-                                     date.second=TestKey*10;
+                                     date.starting_second=TestKey*10;
                              if (count_k_pressed==9)
-                                     date.second=date.second+TestKey;
+                                     date.starting_second=date.starting_second+TestKey;
                          }
 
                         vTaskDelay( 100 / portTICK_RATE_MS);

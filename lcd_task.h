@@ -35,6 +35,9 @@ typedef struct Date
     int16_t hour;
     int16_t minute;
     int16_t second;
+    int16_t starting_hour;
+    int16_t starting_minute;
+    int16_t starting_second;
 } Date;
 
 Date date;

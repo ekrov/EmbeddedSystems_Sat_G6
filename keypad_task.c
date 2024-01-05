@@ -117,12 +117,15 @@ KeypadTask(void *pvParameters)
     while(1)
     {
         if (Check_KPad()==1){
+
+            vTaskDelay( 2 / portTICK_RATE_MS);
+
             Test=Get_Key();
 
             //
             // Pass the value of the button pressed to LEDTask.
             //
-            if (Test>0){
+           // if (Test>0){
                 if (xQueueSend(g_pKeypadQueue, &Test, 100 / portTICK_RATE_MS) == pdPASS)
 
                     //printf("\nidk\n");
@@ -131,7 +134,7 @@ KeypadTask(void *pvParameters)
                 }else{
                     temp=0;
                 }
-        }
+      //  }
             //
             //            if (Test<10){
             //

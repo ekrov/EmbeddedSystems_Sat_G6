@@ -61,20 +61,20 @@ UartTaskReceive(void *pvParameters)
                 while (!UARTCharsAvail(UART1_BASE))
                     vTaskDelay(pdMS_TO_TICKS(1));
 
-                // Le um caractere da porta UART
+                // Le um caracter da porta UART
                 receivedChar = UARTCharGet(UART1_BASE);
 
-                // Verifica se e um caracter de terminaçao
+                // Verifica se o caracter recebido é o caracter inicial
                 if (receivedChar == 'P')
                 {
                     charP = 1;
                 }
 
-                // Verifica se e um caracter de terminaçao
+                // Verifica se o caracter recebido é o caracter final do packet
+                // E se for, envia o buffer preenchido para a queue
                 if (receivedChar == '\n' || receivedChar == '\r')
                 {
                     charP = 0;
-                    // Adiciona o caracter nulo ao final da string
                     buffer[i] = '\0';
                     xQueueSendToFront(uart_queue, &buffer, portMAX_DELAY);
                     //xQueueReceive(uart_queue_counter, &uart_counter, 100);
@@ -89,9 +89,6 @@ UartTaskReceive(void *pvParameters)
                 if (charP == 1)
                 {
                     buffer[i++] = receivedChar;
-                    //Lcd_Write_Char(receivedChar);
-                    //i++;
-                    //return buffer;
                 }
             }
 
