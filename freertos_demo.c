@@ -86,6 +86,8 @@
 //*****************************************************************************
 //xSemaphoreHandle g_pUARTSemaphore;
 xSemaphoreHandle g_BuzzerSemaphore;
+xSemaphoreHandle g_uartSemaphore;
+
 //*****************************************************************************
 //
 // The error routine that is called if the driver library encounters an error.
@@ -118,7 +120,6 @@ vApplicationStackOverflowHook(xTaskHandle *pxTask, char *pcTaskName)
 }
 
 
-
 //*****************************************************************************
 //
 // Initialize FreeRTOS and start the initial set of tasks.
@@ -141,13 +142,7 @@ main(void)
        }
    }
 
-    if(LCDTaskInit() != 0)
-    {
 
-        while(1)
-        {
-        }
-    }
 
     if(I2cTempTaskInit() != 0)
       {
@@ -164,6 +159,15 @@ main(void)
          {
          }
      }
+    g_BuzzerSemaphore = xSemaphoreCreateBinary();
+    g_uartSemaphore = xSemaphoreCreateBinary();
+    if(LCDTaskInit() != 0)
+       {
+
+           while(1)
+           {
+           }
+       }
 
     if(UartTaskReceiveInit() != 0)
      {
@@ -173,7 +177,7 @@ main(void)
          }
      }
 
-    g_BuzzerSemaphore = xSemaphoreCreateBinary();
+
     //
     // Start the scheduler.  This should not return.
     //

@@ -43,17 +43,18 @@
 #define UART_QUEUE_counter_LENGTH 1
 
 #define UARTSTACKSIZE 100
+
+#define buffer_size 50
 // Define o tamanho dos itens na queue uart
-#define UART_SIZE 100*sizeof(char)
+#define UART_SIZE buffer_size*sizeof(char)
 #define UART_counter_SIZE 1*sizeof(int16_t)
 
-#define buffer_size 100
 
 
-int32_t UART_receive(void);
+//int32_t UART_receive(void);
 void UART_Init(void);
-extern uint32_t UartTempTaskInit(void);
-extern void UartTempTask(void *pvParameters);
-
+uint32_t UartTaskReceiveInit(void);
+static void UartTaskReceive(void *pvParameters);
+void UARTIntHandler(void);
 
 #endif /* UART_TASK_H_ */
