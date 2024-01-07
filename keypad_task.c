@@ -118,40 +118,22 @@ KeypadTask(void *pvParameters)
     {
         if (Check_KPad()==1){
 
-            vTaskDelay( 2 / portTICK_RATE_MS);
+            vTaskDelay( 5 / portTICK_RATE_MS);
 
             Test=Get_Key();
 
             //
-            // Pass the value of the button pressed to LEDTask.
+            // Pass the value of the button pressed to its queue, read by the LCD task.
             //
-           // if (Test>0){
-                if (xQueueSend(g_pKeypadQueue, &Test, 100 / portTICK_RATE_MS) == pdPASS)
+            if (xQueueSend(g_pKeypadQueue, &Test, 100 / portTICK_RATE_MS) == pdPASS)
+                temp=1;
 
-                    //printf("\nidk\n");
-                    temp=1;
-
-                }else{
-                    temp=0;
-                }
-      //  }
-            //
-            //            if (Test<10){
-            //
-            //
-            //             }
-            //             else
-            //             {
-            //                 idk=1;
-            //                 idk=1;
-            //                 idk=1;
-            //                 idk=1;
-            //                 idk=1;
-            //             }
-         //}
+            }else{
+                temp=0;
+            }
 
 
-        vTaskDelayUntil(&ui32WakeTime, 100 / portTICK_RATE_MS);
+        vTaskDelayUntil(&ui32WakeTime, 69 / portTICK_RATE_MS);
 
     }
 }
@@ -162,8 +144,6 @@ KeypadTaskInit(void)
 
     // Configuration of keyboard
     GPIO_Keypad_Init();
-
-
 
     //
     // Create the LED task.

@@ -39,6 +39,29 @@ uart_task.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/fpu.h
 uart_task.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/gpio.h
 uart_task.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/interrupt.h
 uart_task.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/uart.h
+uart_task.obj: ../lcd_task.h
+uart_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdlib.h
+uart_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/math.h
+uart_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/ymath.h
+uart_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/float.h
+uart_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/_math_config.h
+uart_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/errno.h
+uart_task.obj: C:/ti/tivaware_c_series_2_1_4_178/inc/tm4c123gh6pm.h
+uart_task.obj: C:/ti/tivaware_c_series_2_1_4_178/examples/boards/ek-tm4c123gxl/drivers/rgb.h
+uart_task.obj: C:/ti/tivaware_c_series_2_1_4_178/examples/boards/ek-tm4c123gxl/drivers/buttons.h
+uart_task.obj: ../keypad_task.h
+uart_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h
+uart_task.obj: ../i2c_temp.h
+uart_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h
+uart_task.obj: ../buzzer_pwm.h
+uart_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h
+uart_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h
+uart_task.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/timers.h
+uart_task.obj: ../timer_funcs.h
+uart_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h
+uart_task.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/timer.h
+uart_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h
+uart_task.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h
 
 ../uart_task.c:
 
@@ -117,4 +140,50 @@ C:/ti/tivaware_c_series_2_1_4_178/driverlib/gpio.h:
 C:/ti/tivaware_c_series_2_1_4_178/driverlib/interrupt.h:
 
 C:/ti/tivaware_c_series_2_1_4_178/driverlib/uart.h:
+
+../lcd_task.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdlib.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/math.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/ymath.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/float.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/_math_config.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/errno.h:
+
+C:/ti/tivaware_c_series_2_1_4_178/inc/tm4c123gh6pm.h:
+
+C:/ti/tivaware_c_series_2_1_4_178/examples/boards/ek-tm4c123gxl/drivers/rgb.h:
+
+C:/ti/tivaware_c_series_2_1_4_178/examples/boards/ek-tm4c123gxl/drivers/buttons.h:
+
+../keypad_task.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h:
+
+../i2c_temp.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h:
+
+../buzzer_pwm.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h:
+
+C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/timers.h:
+
+../timer_funcs.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h:
+
+C:/ti/tivaware_c_series_2_1_4_178/driverlib/timer.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h:
 

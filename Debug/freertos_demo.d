@@ -24,6 +24,10 @@ freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/
 freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/_math_config.h
 freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/errno.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/inc/tm4c123gh6pm.h
+freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/examples/boards/ek-tm4c123gxl/drivers/rgb.h
+freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/examples/boards/ek-tm4c123gxl/drivers/buttons.h
+freertos_demo.obj: ../keypad_task.h
+freertos_demo.obj: ../priorities.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/FreeRTOS.h
 freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stddef.h
 freertos_demo.obj: D:/MEE/SistEmbebidos/freertos_demo/FreeRTOSConfig.h
@@ -36,24 +40,27 @@ freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/list.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/queue.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/semphr.h
-freertos_demo.obj: ../buzzer_pwm.h
-freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/examples/boards/ek-tm4c123gxl/drivers/rgb.h
-freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/examples/boards/ek-tm4c123gxl/drivers/buttons.h
-freertos_demo.obj: ../priorities.h
 freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/debug.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/pwm.h
-freertos_demo.obj: ../uart_task.h
+freertos_demo.obj: ../i2c_temp.h
 freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/inc/hw_i2c.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/inc/hw_gpio.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/i2c.h
+freertos_demo.obj: ../buzzer_pwm.h
+freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h
+freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h
+freertos_demo.obj: ../uart_task.h
+freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/inc/hw_ints.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/fpu.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/interrupt.h
+freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/timers.h
 freertos_demo.obj: ../timer_funcs.h
 freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/driverlib/timer.h
+freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h
 freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h
 
 ../freertos_demo.c:
@@ -104,6 +111,14 @@ D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/errno.h:
 
 C:/ti/tivaware_c_series_2_1_4_178/inc/tm4c123gh6pm.h:
 
+C:/ti/tivaware_c_series_2_1_4_178/examples/boards/ek-tm4c123gxl/drivers/rgb.h:
+
+C:/ti/tivaware_c_series_2_1_4_178/examples/boards/ek-tm4c123gxl/drivers/buttons.h:
+
+../keypad_task.h:
+
+../priorities.h:
+
 C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/FreeRTOS.h:
 
 D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stddef.h:
@@ -128,21 +143,13 @@ C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/queue.h:
 
 C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/semphr.h:
 
-../buzzer_pwm.h:
-
-C:/ti/tivaware_c_series_2_1_4_178/examples/boards/ek-tm4c123gxl/drivers/rgb.h:
-
-C:/ti/tivaware_c_series_2_1_4_178/examples/boards/ek-tm4c123gxl/drivers/buttons.h:
-
-../priorities.h:
-
 D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h:
 
 C:/ti/tivaware_c_series_2_1_4_178/driverlib/debug.h:
 
 C:/ti/tivaware_c_series_2_1_4_178/driverlib/pwm.h:
 
-../uart_task.h:
+../i2c_temp.h:
 
 D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h:
 
@@ -152,17 +159,31 @@ C:/ti/tivaware_c_series_2_1_4_178/inc/hw_gpio.h:
 
 C:/ti/tivaware_c_series_2_1_4_178/driverlib/i2c.h:
 
+../buzzer_pwm.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h:
+
+../uart_task.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h:
+
 C:/ti/tivaware_c_series_2_1_4_178/inc/hw_ints.h:
 
 C:/ti/tivaware_c_series_2_1_4_178/driverlib/fpu.h:
 
 C:/ti/tivaware_c_series_2_1_4_178/driverlib/interrupt.h:
 
+C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/timers.h:
+
 ../timer_funcs.h:
 
 D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stdarg.h:
 
 C:/ti/tivaware_c_series_2_1_4_178/driverlib/timer.h:
+
+D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h:
 
 D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/time.h:
 

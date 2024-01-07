@@ -7,32 +7,7 @@
 
 
 #include "lcd_task.h"
-#include <stdbool.h>
-#include <stdint.h>
-#include "inc/hw_memmap.h"
-#include "inc/hw_types.h"
-#include "driverlib/gpio.h"
-#include "driverlib/rom.h"
-#include "drivers/rgb.h"
-#include "drivers/buttons.h"
-#include "utils/uartstdio.h"
-#include "keypad_task.h"
-#include "i2c_temp.h"
-#include "buzzer_pwm.h"
-#include "priorities.h"
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
-#include "semphr.h"
-#include <stdarg.h>
-#include "driverlib/debug.h"
-#include "driverlib/sysctl.h"
-#include "driverlib/pin_map.h"
-#include "driverlib/pwm.h"
-#include "uart_task.h"
-#include "timers.h"
-#include "timer_funcs.h"
-#include <time.h>
+
 
 // Queue handles
 xQueueHandle g_pKeypadQueue;
@@ -261,8 +236,8 @@ LCDTask(void *pvParameters)
     float temp1=0;
     float temp0=0;
     float packet_number_idk;
-    char buffer[50];
-    char buffer_all_matrix[20][50];
+    char buffer[buffer_size];
+    char buffer_all_matrix[20][buffer_size];
     int32_t counter = 0;
     uint32_t previous_counter = 0;
     char time_counter[5];
@@ -278,14 +253,14 @@ LCDTask(void *pvParameters)
     date.starting_second=0;
 
 
-    int16_t hour_received;
-    int16_t minute_received;
-    int16_t second_received;
+    int16_t hour_received=0;
+    int16_t minute_received=0;
+    int16_t second_received=0;
 
-    int8_t initiated=1;
     int8_t setup_time=0;
-
+    int8_t setup_date=1;
     int8_t flag_receiving_packet=0;
+    initiated=0;
     //
     // Initialize the LED Toggle Delay to default value.
     //
@@ -369,33 +344,22 @@ LCDTask(void *pvParameters)
                   case 3:
 
                       //Recebe dados da fila
-                      sucessfulReceived = xQueueReceive(uart_queue, &buffer, 100);
+                      sucessfulReceived = xQueueReceive(uart_queue, &buffer, 1000);
 
                       if (sucessfulReceived == pdTRUE)
                       {
-                          //packet_number_idk=packet_division(&buffer, 1);
                           taskENTER_CRITICAL();
                           Lcd_Clear();
-                          //for (i = 0; i < 20; i++)
-                          //    Lcd_Write_Char(buffer[i]);
-                          //Lcd_Write_String("Packet nr :");
-
-//                          Lcd_Write_Char('P');
-//                          Lcd_Write_Char('a');
-//                          Lcd_Write_Char('c');
-//                          Lcd_Write_Char('k');
-//                          Lcd_Write_Char('e');
-//                          Lcd_Write_Char('t');
-//                          Lcd_Write_Char(' ');
-
                           Lcd_Write_String("Packet:");
-                          for (i = 4; i < 8; i++)
+                          for (i = 4; i < (buffer_size-10); i++){
                                Lcd_Write_Char(buffer[i]);
-                          //Lcd_Write_Float(packet_number);
-                          //Lcd_Write_Char(packet_number_idk+'0');
-
+                          }
                           taskEXIT_CRITICAL();
-                        //vTaskDelay( 1 / portTICK_RATE_MS);
+                          vTaskDelay( 1000 / portTICK_RATE_MS);
+                          for (i = 4; i < (buffer_size-28); i++){
+                              vTaskDelay( 300 / portTICK_RATE_MS);
+                              Lcd_Shift_Left();
+                          }
 
 
                       }
@@ -450,12 +414,21 @@ LCDTask(void *pvParameters)
                       if(xQueuePeek(xTimerQueue, &counter, 100) == pdPASS)
                         {
 
-                          hour_received=(counter/3600);
-                          minute_received=(counter-hour_received*3600)/60;
-                          second_received=(counter-minute_received*60-hour_received*3600);
+                          if (counter>3600)
+                              hour_received=(counter/3600);
+                          else
+                              hour_received=0;
+                          if (counter>(60))
+                              minute_received=(counter-hour_received*3600)/60;
+                          else
+                              minute_received=0;
+                          if (counter>0)
+                              second_received=(counter-minute_received*60-hour_received*3600);
+                          else
+                              second_received=0;
 
                           date.hour=hour_received+date.starting_hour;
-                          date.minute=minute_received+date.starting_hour;
+                          date.minute=minute_received+date.starting_minute;
                           date.second=second_received+date.starting_second;
 
                         taskENTER_CRITICAL();
@@ -557,22 +530,22 @@ LCDTask(void *pvParameters)
                                                            if (sucessfulReceived == pdTRUE)
                                                            {
                                                                // if packet numbers == keys pressed
-                                                               packet_temp=buffer[4]-'0';
-                                                               if (packet_temp==keys_Packet[0] || buffer[4]==32){
+                                                               packet_temp=buffer[5]-'0';
+                                                               if (packet_temp==keys_Packet[0] || buffer[5]==32){
 
-                                                                   packet_temp=buffer[5]-'0';
-                                                                   if (packet_temp==keys_Packet[1] || buffer[5]==32){
+                                                                   packet_temp=buffer[6]-'0';
+                                                                   if (packet_temp==keys_Packet[1] || buffer[6]==32){
 
-                                                                       packet_temp=buffer[6]-'0';
+                                                                       packet_temp=buffer[7]-'0';
 
-                                                                       if (packet_temp==keys_Packet[2] || buffer[6]==32){
+                                                                       if (packet_temp==keys_Packet[2] || buffer[7]==32){
 
-                                                                           packet_temp=buffer[7]-'0';
+                                                                           packet_temp=buffer[8]-'0';
 
                                                                            if (packet_temp==TestKey && flag_receiving_packet==1){
                                                                                vTaskDelay( 1 / portTICK_RATE_MS);
                                                                                //show packet on lcd
-                                                                              taskENTER_CRITICAL();
+                                                                             /* taskENTER_CRITICAL();
                                                                               Lcd_Clear();
                                                                               //for (i = 0; i < 20; i++)
                                                                               //    Lcd_Write_Char(buffer[i]);
@@ -583,6 +556,20 @@ LCDTask(void *pvParameters)
                                                                               //Lcd_Write_Char(packet_number_idk+'0');
 
                                                                               taskEXIT_CRITICAL();
+                                                                            */
+
+                                                                               taskENTER_CRITICAL();
+                                                                                 Lcd_Clear();
+                                                                                 Lcd_Write_String("Packet:");
+                                                                                 for (i = 4; i < (buffer_size-10); i++){
+                                                                                      Lcd_Write_Char(buffer[i]);
+                                                                                 }
+                                                                                 taskEXIT_CRITICAL();
+                                                                                 vTaskDelay( 1000 / portTICK_RATE_MS);
+                                                                                 for (i = 4; i < (buffer_size-28); i++){
+                                                                                     vTaskDelay( 300 / portTICK_RATE_MS);
+                                                                                     Lcd_Shift_Left();
+                                                                                 }
 
                                                                               vTaskDelay( 1000 / portTICK_RATE_MS);
                                                                               flag_receiving_packet=0;
@@ -678,17 +665,17 @@ LCDTask(void *pvParameters)
                                                              if (sucessfulReceived == pdTRUE)
                                                              {
                                                                  // if packet numbers == keys pressed
-                                                                 packet_temp=buffer[4]-'0';
-                                                                 if (packet_temp==keys_Packet[0] || buffer[4]==32){
+                                                                packet_temp=buffer[5]-'0';
+                                                                if (packet_temp==keys_Packet[0] || buffer[5]==32){
 
-                                                                     packet_temp=buffer[5]-'0';
-                                                                     if (packet_temp==keys_Packet[1] || buffer[5]==32){
+                                                                    packet_temp=buffer[6]-'0';
+                                                                    if (packet_temp==keys_Packet[1] || buffer[6]==32){
 
-                                                                         packet_temp=buffer[6]-'0';
+                                                                        packet_temp=buffer[7]-'0';
 
-                                                                         if (packet_temp==keys_Packet[2] || buffer[6]==32){
+                                                                        if (packet_temp==keys_Packet[2] || buffer[7]==32){
 
-                                                                             packet_temp=buffer[7]-'0';
+                                                                            packet_temp=buffer[8]-'0';
 
                                                                              if (packet_temp==TestKey && flag_receiving_packet==1){
                                                                                  vTaskDelay( 1 / portTICK_RATE_MS);
@@ -701,7 +688,7 @@ LCDTask(void *pvParameters)
                                                                                 for (i = 4; i < 9; i++)
                                                                                  Lcd_Write_Char(buffer[i]);
                                                                                 Lcd_Write_Char(':');
-                                                                                for (i = 37; i < 40; i++)
+                                                                                for (i = 39; i < 44; i++)
                                                                                  Lcd_Write_Char(buffer[i]);
                                                                                 //Lcd_Write_Float(packet_number);
                                                                                 //Lcd_Write_Char(packet_number_idk+'0');
@@ -709,6 +696,12 @@ LCDTask(void *pvParameters)
                                                                                 taskEXIT_CRITICAL();
 
                                                                                 vTaskDelay( 1000 / portTICK_RATE_MS);
+                                                                                 for (i = 4; i < (buffer_size-40); i++){
+                                                                                     vTaskDelay( 300 / portTICK_RATE_MS);
+                                                                                     Lcd_Shift_Left();
+                                                                                 }
+
+                                                                              vTaskDelay( 1000 / portTICK_RATE_MS);
                                                                                 flag_receiving_packet=0;
                                                                                 idk=0;
                                                                               xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
@@ -749,48 +742,121 @@ LCDTask(void *pvParameters)
                          xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
 
                         break;
-                  case 0:
-                      taskENTER_CRITICAL();
-                     Lcd_Clear();
-                     Lcd_Write_Char('-');
-                     Lcd_Write_Char('-');
-                     Lcd_Write_Char('-');
-                     Lcd_Write_Char('-');
-                     Lcd_Write_Char('P');
-                     Lcd_Write_Char('R');
-                     Lcd_Write_Char('E');
-                     Lcd_Write_Char('S');
-                     Lcd_Write_Char('S');
-                     Lcd_Write_Char(' ');
-                     Lcd_Write_Char('A');
-                     Lcd_Write_Char(' ');
-                     Lcd_Write_Char('K');
-                     Lcd_Write_Char('E');
-                     Lcd_Write_Char('Y');
-                     Lcd_Write_Char('-');
-                     Lcd_Write_Char('-');
-                     Lcd_Write_Char('-');
-                     Lcd_Write_Char('-');
-                     taskEXIT_CRITICAL();
-                      break;
-
                   default:
-                      vTaskDelay( 1000 / portTICK_RATE_MS);
+                      vTaskDelay( 1 / portTICK_RATE_MS);
 
                     // code block
                 }
+            }else{
+                if(xQueuePeek(xTimerQueue, &counter, 100) == pdPASS)
+                {
+                Lcd_Write_Char('*');
+                if (counter>3600)
+                      hour_received=(counter/3600);
+                  else
+                      hour_received=0;
+                  if (counter>(60))
+                      minute_received=(counter-hour_received*3600)/60;
+                  else
+                      minute_received=0;
+                  if (counter>0)
+                      second_received=(counter-minute_received*60-hour_received*3600);
+                  else
+                      second_received=0;
+
+                  date.hour=hour_received+date.starting_hour;
+                  date.minute=minute_received+date.starting_minute;
+                  date.second=second_received+date.starting_second;
+
+                  if (date.second>60)
+                  {
+                      date.second=date.second-60;
+                      date.minute=date.minute+1;
+                  }
+                taskENTER_CRITICAL();
+                Lcd_Clear();
+                //Lcd_Write_String("Time:");
+
+                  sprintf(time_counter, "%d", date.hour);
+                  //itoa(uart_counter, snum, 10);
+                  for (i = 0; i < 5; i++)
+                  {
+                      time_counter_int=time_counter[i]-'0';
+                      if (time_counter_int<=9 && time_counter_int>=0){
+                        Lcd_Write_Char(time_counter[i]);
+                      }
+
+                  }
+                  Lcd_Write_String("h ");
+
+                  sprintf(time_counter, "%d", date.minute);
+                    //itoa(uart_counter, snum, 10);
+                    for (i = 0; i < 5; i++)
+                    {
+                        time_counter_int=time_counter[i]-'0';
+                        if (time_counter_int<=9 && time_counter_int>=0){
+                          Lcd_Write_Char(time_counter[i]);
+                        }
+
+                    }
+                    Lcd_Write_String("m ");
+
+                    sprintf(time_counter, "%d", date.second);
+                    //itoa(uart_counter, snum, 10);
+                    for (i = 0; i < 5; i++)
+                    {
+                        time_counter_int=time_counter[i]-'0';
+                        if (time_counter_int<=9 && time_counter_int>=0){
+                          Lcd_Write_Char(time_counter[i]);
+                        }
+
+                    }
+                    Lcd_Write_Char('s');
+                taskEXIT_CRITICAL();
+
+                if(xQueueReceive(g_pI2cTempQueue, &Temperaturei2c, 100) == pdPASS)
+                  {
+                      taskENTER_CRITICAL();
+                      //dezenas
+                     temp2=Temperaturei2c/10;
+
+                     // unidades
+                     temp1=Temperaturei2c-((int) temp2*10);
+
+                     //decimal
+                     temp0= (int)temp1;
+                     temp0=temp1-temp0;
+                     temp0=temp0*10.0;
+                     temp0=round(temp0);
+                     Lcd_Write_Char(' ');
+                     Lcd_Write_Char('T');
+                     Lcd_Write_Char(':');
+                     Lcd_Write_Char(temp2+'0');
+                     Lcd_Write_Char(temp1+'0');
+                     Lcd_Write_Char('.');
+                     Lcd_Write_Char(temp0+'0');
+                     Lcd_Write_Char(' ');
+                     Lcd_Write_Char('C');
+                      taskEXIT_CRITICAL();
+                  }
+                vTaskDelay( 100 / portTICK_RATE_MS);
+                }
             }
-            TestKey=200;
+
 
         }else{
 
-            if (setup_time==0){
+            if (setup_date==1){
+
                 // Start the system, by defining the date and the time
-                if (count_k_pressed<1 ){
-                    taskENTER_CRITICAL();
-                    Lcd_Clear();
-                    Lcd_Write_String("Insert: MM--DD--YYYY");
-                    taskEXIT_CRITICAL();
+                if (TestKey==200){
+                    if (count_k_pressed<1 ){
+                        taskENTER_CRITICAL();
+                        Lcd_Clear();
+                        Lcd_Write_String("Insert: MM--DD--YYYY");
+                        taskEXIT_CRITICAL();
+                        TestKey=201;
+                    }
                 }
                 if (count_k_pressed<12){
                     Lcd_Set_Cursor(1,(9+count_k_pressed));
@@ -807,21 +873,55 @@ LCDTask(void *pvParameters)
                              taskEXIT_CRITICAL();
                              count_k_pressed=count_k_pressed+1;
 
-                             if (count_k_pressed==1)
-                                     date.day=TestKey*10;
-                             if (count_k_pressed==2)
-                                     date.day=date.day+TestKey;
-                             if (count_k_pressed==4)
+
+                             if (count_k_pressed==1){
+                                 if (TestKey<2)
                                      date.month=TestKey*10;
-                             if (count_k_pressed==5)
+                                 else
+                                     count_k_pressed=count_k_pressed-1;
+                             }
+                             if (count_k_pressed==2){
+                                 if (date.month==10 && TestKey<3)
                                      date.month=date.month+TestKey;
-                             if (count_k_pressed==8)
-                                     date.month=TestKey;
+                                 else{
+                                     if (date.month<10)
+                                         date.month=date.month+TestKey;
+                                     else
+                                         count_k_pressed=count_k_pressed-1;
+                                 }
+                             }
+
+                             if (count_k_pressed==5)
+                             {
+                                     if (TestKey<4)
+                                         date.day=TestKey*10;
+                                     else{
+                                         count_k_pressed=count_k_pressed-1;
+                                     }
+
+                             }
+                             if (count_k_pressed==6){
+                                 if(date.day==30 && TestKey<2)
+                                     date.day=date.day+TestKey;
+                                 else
+                                 {
+                                     if (date.day<30)
+                                         date.day=date.day+TestKey;
+                                     else
+                                         count_k_pressed=count_k_pressed-1;
+                                 }
+                             }
                              if (count_k_pressed==9)
-                                     date.year=TestKey*10;
+                                     date.year=TestKey*1000;
+                             if (count_k_pressed==10)
+                                     date.year=date.year+TestKey*100;
+                             if (count_k_pressed==11)
+                                      date.year=date.year+TestKey*10;
+                             if (count_k_pressed==12)
+                                      date.year=date.year+TestKey;
                          }
 
-                        vTaskDelay( 100 / portTICK_RATE_MS);
+                        vTaskDelay( 20 / portTICK_RATE_MS);
                     }
                 }
                 if (count_k_pressed==2)
@@ -830,20 +930,24 @@ LCDTask(void *pvParameters)
                     count_k_pressed=8;
                 if (count_k_pressed==12)
                 {
+                    setup_date=0;
                     setup_time=1;
                     count_k_pressed=0;
+                    TestKey=200;
 
-                    /*initiated=1;
-                    idk=0;
-                    xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);*/
                 }
-            }else{
+            }
+            if(setup_time==1){
                 // Start the system, by defining the date and the time
-                if (count_k_pressed<1 ){
-                    taskENTER_CRITICAL();
-                    Lcd_Clear();
-                    Lcd_Write_String("Insert: HH--MM--SS");
-                    taskEXIT_CRITICAL();
+                if (TestKey==200){
+                    if (count_k_pressed<1 ){
+                        taskENTER_CRITICAL();
+                        Lcd_Clear();
+                        Lcd_Write_String("Insert: HH--MM--SS");
+                        taskEXIT_CRITICAL();
+                        TestKey=201;
+
+                    }
                 }
                 if (count_k_pressed<12){
                     Lcd_Set_Cursor(1,(9+count_k_pressed));
@@ -860,21 +964,44 @@ LCDTask(void *pvParameters)
                              taskEXIT_CRITICAL();
                              count_k_pressed=count_k_pressed+1;
 
-                             if (count_k_pressed==1)
+                             if (count_k_pressed==1){
+                                 if (TestKey<3)
                                      date.starting_hour=TestKey*10;
-                             if (count_k_pressed==2)
+                                 else
+                                     count_k_pressed=count_k_pressed-1;
+                             }
+
+                             if (count_k_pressed==2){
+                                 if (date.starting_hour==20 && TestKey<5)
                                      date.starting_hour=date.starting_hour+TestKey;
-                             if (count_k_pressed==4)
+                                 else{
+
+                                     if(date.starting_hour<20)
+                                         date.starting_hour=date.starting_hour+TestKey;
+                                     else
+                                         count_k_pressed=count_k_pressed-1;
+                                 }
+                             }
+                             if (count_k_pressed==5){
+                                 if (TestKey<6)
                                      date.starting_minute=TestKey*10;
-                             if (count_k_pressed==5)
+                                 else
+                                     count_k_pressed=count_k_pressed-1;
+                             }
+                              if (count_k_pressed==6){
                                      date.starting_minute=date.starting_minute+TestKey;
-                             if (count_k_pressed==8)
+                              }
+                             if (count_k_pressed==9){
+                                 if (TestKey<6)
                                      date.starting_second=TestKey*10;
-                             if (count_k_pressed==9)
+                                 else
+                                     count_k_pressed=count_k_pressed-1;
+                             }
+                             if (count_k_pressed==10)
                                      date.starting_second=date.starting_second+TestKey;
                          }
 
-                        vTaskDelay( 100 / portTICK_RATE_MS);
+                        vTaskDelay( 20 / portTICK_RATE_MS);
                     }
                 }
                 if (count_k_pressed==2)
@@ -883,6 +1010,7 @@ LCDTask(void *pvParameters)
                     count_k_pressed=8;
                 if (count_k_pressed==10)
                 {
+                    setup_time=0;
                     initiated=1;
                     idk=0;
                     xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
@@ -891,7 +1019,7 @@ LCDTask(void *pvParameters)
 
         }
 
-        vTaskDelayUntil(&ui32WakeTime, 400 / portTICK_RATE_MS);
+        vTaskDelayUntil(&ui32WakeTime, 100 / portTICK_RATE_MS);
     }
 }
 

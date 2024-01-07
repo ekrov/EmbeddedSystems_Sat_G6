@@ -15,7 +15,32 @@
 #include "driverlib/gpio.h"
 #include "inc/tm4c123gh6pm.h"
 #include "inc/hw_memmap.h"
-
+#include <stdbool.h>
+#include <stdint.h>
+#include "inc/hw_memmap.h"
+#include "inc/hw_types.h"
+#include "driverlib/gpio.h"
+#include "driverlib/rom.h"
+#include "drivers/rgb.h"
+#include "drivers/buttons.h"
+#include "utils/uartstdio.h"
+#include "keypad_task.h"
+#include "i2c_temp.h"
+#include "buzzer_pwm.h"
+#include "priorities.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
+#include <stdarg.h>
+#include "driverlib/debug.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/pin_map.h"
+#include "driverlib/pwm.h"
+#include "uart_task.h"
+#include "timers.h"
+#include "timer_funcs.h"
+#include <time.h>
 #define LCDTASKSTACKSIZE        1536        // Stack size in words
 
 #define RS GPIO_PIN_3 //Register Select (Character or Instruction)
@@ -41,6 +66,7 @@ typedef struct Date
 } Date;
 
 Date date;
+int8_t initiated;
 
 // function prototypes
 void Lcd_Port(char a);
