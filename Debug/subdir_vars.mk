@@ -10,7 +10,7 @@ CMD_SRCS += \
 
 C_SRCS += \
 ../buzzer_pwm.c \
-../freertos_demo.c \
+../groundstation_starter.c \
 ../i2c_temp.c \
 ../keypad_task.c \
 ../lcd_task.c \
@@ -20,7 +20,7 @@ C_SRCS += \
 
 C_DEPS += \
 ./buzzer_pwm.d \
-./freertos_demo.d \
+./groundstation_starter.d \
 ./i2c_temp.d \
 ./keypad_task.d \
 ./lcd_task.d \
@@ -30,7 +30,7 @@ C_DEPS += \
 
 OBJS += \
 ./buzzer_pwm.obj \
-./freertos_demo.obj \
+./groundstation_starter.obj \
 ./i2c_temp.obj \
 ./keypad_task.obj \
 ./lcd_task.obj \
@@ -40,7 +40,7 @@ OBJS += \
 
 OBJS__QUOTED += \
 "buzzer_pwm.obj" \
-"freertos_demo.obj" \
+"groundstation_starter.obj" \
 "i2c_temp.obj" \
 "keypad_task.obj" \
 "lcd_task.obj" \
@@ -50,7 +50,7 @@ OBJS__QUOTED += \
 
 C_DEPS__QUOTED += \
 "buzzer_pwm.d" \
-"freertos_demo.d" \
+"groundstation_starter.d" \
 "i2c_temp.d" \
 "keypad_task.d" \
 "lcd_task.d" \
@@ -60,7 +60,7 @@ C_DEPS__QUOTED += \
 
 C_SRCS__QUOTED += \
 "../buzzer_pwm.c" \
-"../freertos_demo.c" \
+"../groundstation_starter.c" \
 "../i2c_temp.c" \
 "../keypad_task.c" \
 "../lcd_task.c" \

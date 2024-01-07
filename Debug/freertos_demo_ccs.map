@@ -1,7 +1,7 @@
 ******************************************************************************
                   TI ARM Linker PC v5.2.9                      
 ******************************************************************************
->> Linked Sun Jan 07 20:14:28 2024
+>> Linked Sun Jan 07 20:22:54 2024
 
 OUTPUT FILE NAME:   <freertos_demo.out>
 ENTRY POINT SYMBOL: "_c_int00"  address: 00005b45
@@ -69,7 +69,7 @@ section   page    origin      length       input sections
                   00003f3c    000000e4     tasks.obj (.text:xTaskResumeAll)
                   00004020    000000dc     rtsv7M4_T_le_v4SPD16_eabi.lib : setvbuf.obj (.text)
                   000040fc    000000d2     portasm.obj (.text)
-                  000041ce    00000002     freertos_demo.obj (.text:vApplicationStackOverflowHook)
+                  000041ce    00000002     groundstation_starter.obj (.text:vApplicationStackOverflowHook)
                   000041d0    000000c8     rtsv7M4_T_le_v4SPD16_eabi.lib : fflush.obj (.text)
                   00004298    000000c0                                   : xdint.obj (.text)
                   00004358    000000be                                   : xdnorm.obj (.text)
@@ -113,7 +113,7 @@ section   page    origin      length       input sections
                   00005384    00000062     queue.obj (.text:prvUnlockQueue)
                   000053e6    00000002     --HOLE-- [fill = 0]
                   000053e8    00000060     driverlib.lib : timer.obj (.text:TimerConfigure)
-                  00005448    00000060     freertos_demo.obj (.text:main)
+                  00005448    00000060     groundstation_starter.obj (.text:main)
                   000054a8    00000060     buzzer_pwm.obj (.text:playSong)
                   00005508    00000060     tasks.obj (.text:prvInitialiseTaskLists)
                   00005568    00000060     rtsv7M4_T_le_v4SPD16_eabi.lib : sprintf.obj (.text)

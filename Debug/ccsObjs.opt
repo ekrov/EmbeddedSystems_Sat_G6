@@ -1,5 +1,5 @@
 "./buzzer_pwm.obj"
-"./freertos_demo.obj"
+"./groundstation_starter.obj"
 "./i2c_temp.obj"
 "./keypad_task.obj"
 "./lcd_task.obj"

@@ -30,7 +30,7 @@ freertos_demo.obj: ../keypad_task.h
 freertos_demo.obj: ../priorities.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/FreeRTOS.h
 freertos_demo.obj: D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stddef.h
-freertos_demo.obj: D:/MEE/SistEmbebidos/freertos_demo/FreeRTOSConfig.h
+freertos_demo.obj: D:/MEE/SistEmbebidos/GroundStation_Group6/FreeRTOSConfig.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/projdefs.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/portable.h
 freertos_demo.obj: C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/deprecated_definitions.h
@@ -123,7 +123,7 @@ C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/FreeRTOS.h
 
 D:/MEE/SistEmbebidos/CSS/ccs/tools/compiler/ti-cgt-arm_5.2.9/include/stddef.h:
 
-D:/MEE/SistEmbebidos/freertos_demo/FreeRTOSConfig.h:
+D:/MEE/SistEmbebidos/GroundStation_Group6/FreeRTOSConfig.h:
 
 C:/ti/tivaware_c_series_2_1_4_178/third_party/FreeRTOS/Source/include/projdefs.h:
 
