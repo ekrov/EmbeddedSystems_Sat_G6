@@ -40,7 +40,7 @@
 #define TEMPSTACKSIZE        100         // Stack size in words
 
 #define I2CTEMP_ITEM_SIZE           sizeof(float)
-#define I2CTEMP_QUEUE_SIZE          5
+#define I2CTEMP_QUEUE_SIZE          1
 
 
 void InitI2C0();

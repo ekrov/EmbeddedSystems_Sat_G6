@@ -27,6 +27,7 @@ uint8_t count=0;
 uint8_t idk[4];
 uint8_t temp;
 
+// Queue that stores the latest keys pressed
 xQueueHandle g_pKeypadQueue;
 
 
@@ -70,10 +71,6 @@ uint8_t Check_KPad(){
         }
     }
     return 0;
-    /*if((Input_value&0x0F)!=0x0F)
-        return 1;
-    else
-        return 0;*/
 }
 
 /*Get the key are pressed in the  keyboard if detect at least one key is pressed//
@@ -95,17 +92,13 @@ uint8_t Get_Key(){
             K_pressed=Keypad[cur_Row][cur_Col];                   //else check another cols
         }
     }
-    SysCtlDelay(SysCtlClockGet()/30);
+    SysCtlDelay(SysCtlClockGet()/45);
     return K_pressed;
 }
 
-static void
-KeypadTask(void *pvParameters)
+static void KeypadTask(void *pvParameters)
 {
     portTickType ui32WakeTime;
-    uint32_t ui32LEDToggleDelay;
-    uint8_t i8Message;
-
     //
     // Get the current tick count.
     //
@@ -116,25 +109,21 @@ KeypadTask(void *pvParameters)
     //
     while(1)
     {
+        // See if any key is pressed
         if (Check_KPad()==1){
 
             vTaskDelay( 5 / portTICK_RATE_MS);
-
+            //See what key is pressed
             Test=Get_Key();
 
             //
             // Pass the value of the button pressed to its queue, read by the LCD task.
             //
-            if (xQueueSend(g_pKeypadQueue, &Test, 100 / portTICK_RATE_MS) == pdPASS)
-                temp=1;
+            xQueueSend(g_pKeypadQueue, &Test, 100 / portTICK_RATE_MS);
 
-            }else{
-                temp=0;
-            }
+            vTaskDelayUntil(&ui32WakeTime, 69 / portTICK_RATE_MS);
 
-
-        vTaskDelayUntil(&ui32WakeTime, 69 / portTICK_RATE_MS);
-
+        }
     }
 }
 
@@ -148,8 +137,7 @@ KeypadTaskInit(void)
     //
     // Create the LED task.
     //
-    if(xTaskCreate(KeypadTask, (const portCHAR *)"Keypad", KEYPADSTACKSIZE, NULL,
-                   tskIDLE_PRIORITY + PRIORITY_KEYPAD_TASK, NULL) != pdTRUE)
+    if(xTaskCreate(KeypadTask, (const portCHAR *)"Keypad", KEYPADSTACKSIZE, NULL,tskIDLE_PRIORITY + PRIORITY_KEYPAD_TASK, NULL) != pdTRUE)
     {
         return(1);
     }

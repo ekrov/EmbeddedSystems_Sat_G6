@@ -7,9 +7,10 @@
 
 #include "buzzer_pwm.h"
 
+// Binary semaphore of buzzer ( is currently given by LCD)
 extern xSemaphoreHandle g_BuzzerSemaphore;
 
-
+// Initial configuration of pwm
 void configurePWM(void)
 {
     // Enable the PWM0 peripheral
@@ -84,7 +85,6 @@ BuzzerTask(void *pvParameters)
 
             playSong();
 
-            //configurePWM();
         }
 
 

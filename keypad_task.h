@@ -51,7 +51,7 @@
 
 #define KEYPADSTACKSIZE        256         // Stack size in words
 #define KEYPAD_ITEM_SIZE           sizeof(uint8_t)
-#define KEYPAD_QUEUE_SIZE          5
+#define KEYPAD_QUEUE_SIZE          1
 
 
 

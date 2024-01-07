@@ -2,20 +2,23 @@
  * i2c_tmp.c
  *
  *  Created on: 14/12/2023
- *      Author: carlos Almeida
+ *      Author: carlos Almeida and benny
  */
 
 
 #include "i2c_temp.h"
+#include "lcd_task.h"
 
+// Queue that stores most recent temperature
 xQueueHandle g_pI2cTempQueue;
+
 float temperature=0;
 float temperature_conv=0;
+// Command that initializes sensor, defines the resolution, etc... (Temperature sensor TMP101)
 uint32_t command_tmp101=0b01100000;
 
 uint8_t i;
 //initialize I2C module 0
-//Slightly modified version of TI's example code
 void InitI2C0(void)
 {
     //enable I2C module 0
@@ -36,15 +39,12 @@ void InitI2C0(void)
     GPIOPinTypeI2C(GPIO_PORTB_BASE, GPIO_PIN_3);
 
     // Enable and initialize the I2C0 master module.  Use the system clock for
-    // the I2C0 module.  The last parameter sets the I2C data transfer rate.
-    // If false the data rate is set to 100kbps and if true the data rate will
-    // be set to 400kbps.
+    // the I2C0 module.
     I2CMasterInitExpClk(I2C0_BASE, SysCtlClockGet(), true);
 
-    //clear I2C FIFOs
-    //HWREG(I2C0_BASE + I2C_O_FIFOCTL) = 80008000;
 }
 
+/*
 //sends an I2C command to the specified slave
 void I2CSend(uint8_t slave_addr, uint8_t num_of_args, ...)
 {
@@ -222,7 +222,9 @@ void I2CSendByte(uint8_t slave_addr, uint32_t byte)
     while(I2CMasterBusy(I2C0_BASE));
 
 }
+*/
 
+// Writes 8 bits to SDA of I2C
 uint32_t I2C_write8BitRegister(uint8_t slaveAddress, uint32_t addressPointer, uint8_t firstByte)
 {
     I2CMasterSlaveAddrSet(I2C0_BASE, slaveAddress, false);
@@ -240,6 +242,7 @@ uint32_t I2C_write8BitRegister(uint8_t slaveAddress, uint32_t addressPointer, ui
     return 0;
 }
 
+// Reads 8 bits from a register twice
 uint32_t I2C_read16BitRegister(uint8_t slaveAddress, uint8_t registerAddress)
 {
 
@@ -272,12 +275,9 @@ uint32_t I2C_read16BitRegister(uint8_t slaveAddress, uint8_t registerAddress)
 }
 
 
-static void
-I2cTempTask(void *pvParameters)
+static void I2cTempTask(void *pvParameters)
 {
     portTickType ui32WakeTime;
-    uint32_t ui32LEDToggleDelay;
-    uint8_t i8Message;
 
     //
     // Get the current tick count.
@@ -289,12 +289,16 @@ I2cTempTask(void *pvParameters)
     //
     while(1)
     {
+        if (initiated>0){
+            // reads temperature from temperature register of tmp101
+           temperature=I2C_read16BitRegister(TMP101_ADDRESS,TMP101_TEMP_REG);
 
-       temperature=I2C_read16BitRegister(TMP101_ADDRESS,TMP101_TEMP_REG);
-       temperature_conv=temperature/256; // conversion binary * 0.0625 (binary/16) /16 again
+           temperature_conv=temperature/256; // conversion binary * 0.0625 (binary/16) /16 again
 
-       xQueueSend(g_pI2cTempQueue, &temperature_conv, 100 / portTICK_RATE_MS);
-
+           // Sends converted float to a queue, it overwrites the previous value on the queue, as this is a one slot queue
+           // And the value is only accessed with peeks
+           xQueueOverwrite(g_pI2cTempQueue, &temperature_conv);
+        }
         vTaskDelayUntil(&ui32WakeTime, 1000 / portTICK_RATE_MS);
 
     }
@@ -304,20 +308,16 @@ uint32_t
 I2cTempTaskInit(void)
 {
 
-    // Configuration of keyboard
-    //GPIO_Keypad_Init();
-
-
     // I2C init
-       InitI2C0();
-       SysCtlDelay(2000);
-       I2C_write8BitRegister(TMP101_ADDRESS,TMP101_config_REG,command_tmp101);
+   InitI2C0();
+   // Needs hard delay, as this isnt a task yet
+   SysCtlDelay(2000);
+   I2C_write8BitRegister(TMP101_ADDRESS,TMP101_config_REG,command_tmp101);
 
     //
-    // Create the LED task.
+    // Create the Temperature task.
     //
-    if(xTaskCreate(I2cTempTask, (const portCHAR *)"I2c Temperature", TEMPSTACKSIZE, NULL,
-                   tskIDLE_PRIORITY + PRIORITY_TEMP_TASK, NULL) != pdTRUE)
+    if(xTaskCreate(I2cTempTask, (const portCHAR *)"I2c Temperature", TEMPSTACKSIZE, NULL,tskIDLE_PRIORITY + PRIORITY_TEMP_TASK, NULL) != pdTRUE)
     {
         return(1);
     }

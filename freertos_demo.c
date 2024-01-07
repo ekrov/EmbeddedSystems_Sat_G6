@@ -42,49 +42,14 @@
 #include "timer_funcs.h"
 
 //*****************************************************************************
-//
-//! \addtogroup example_list
-//! <h1>FreeRTOS Example (freertos_demo)</h1>
-//!
-//! This application demonstrates the use of FreeRTOS on Launchpad.
-//!
-//! The application blinks the user-selected LED at a user-selected frequency.
-//! To select the LED press the left button and to select the frequency press
-//! the right button.  The UART outputs the application status at 115,200 baud,
-//! 8-n-1 mode.
-//!
-//! This application utilizes FreeRTOS to perform the tasks in a concurrent
-//! fashion.  The following tasks are created:
-//!
-//! - An LED task, which blinks the user-selected on-board LED at a
-//!   user-selected rate (changed via the buttons).
-//!
-//! - A Switch task, which monitors the buttons pressed and passes the
-//!   information to LED task.
-//!
-//! In addition to the tasks, this application also uses the following FreeRTOS
-//! resources:
-//!
-//! - A Queue to enable information transfer between tasks.
-//!
-//! - A Semaphore to guard the resource, UART, from access by multiple tasks at
-//!   the same time.
-//!
-//! - A non-blocking FreeRTOS Delay to put the tasks in blocked state when they
-//!   have nothing to do.
-//!
-//! For additional details on FreeRTOS, refer to the FreeRTOS web page at:
-//! http://www.freertos.org/
-//
+// This application is an exemplary configuration of a groundstation system usinf FreeRTOS
 //*****************************************************************************
 
 
 //*****************************************************************************
-//
-// The mutex that protects concurrent access of UART from multiple tasks.
-//
+// Binary semaphores used to control non-periodic tasks
 //*****************************************************************************
-//xSemaphoreHandle g_pUARTSemaphore;
+
 xSemaphoreHandle g_BuzzerSemaphore;
 xSemaphoreHandle g_uartSemaphore;
 
@@ -133,20 +98,20 @@ main(void)
     //
     SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
 
+    // Binary semaphore creation
+    g_BuzzerSemaphore = xSemaphoreCreateBinary();
+    g_uartSemaphore = xSemaphoreCreateBinary();
 
+    // --- Tasks initialization, if it returns a 1, it was not able to create the task
     if(KeypadTaskInit() != 0)
    {
-
        while(1)
        {
        }
    }
 
-
-
     if(I2cTempTaskInit() != 0)
       {
-
           while(1)
           {
           }
@@ -154,16 +119,14 @@ main(void)
 
     if(BuzzerTaskInit() != 0)
      {
-
          while(1)
          {
          }
      }
-    g_BuzzerSemaphore = xSemaphoreCreateBinary();
-    g_uartSemaphore = xSemaphoreCreateBinary();
+
+
     if(LCDTaskInit() != 0)
        {
-
            while(1)
            {
            }
@@ -171,7 +134,6 @@ main(void)
 
     if(UartTaskReceiveInit() != 0)
      {
-
          while(1)
          {
          }

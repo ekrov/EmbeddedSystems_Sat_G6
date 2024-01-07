@@ -37,13 +37,6 @@ void UART_Init(void)
 
 }
 
-//int32_t UART_receive(void){
-//
-//    int32_t uart_received;
-//    uart_received=UARTCharGetNonBlocking(UART1_BASE);
-//    return uart_received;
-//
-//}
 
 static void
 UartTaskReceive(void *pvParameters)
@@ -55,13 +48,13 @@ UartTaskReceive(void *pvParameters)
         char buffer[buffer_size];
         char buffer_temp[buffer_size];
         int32_t temp;
-        int charP = 0;
+        int initial_char_p = 0;
         int32_t uart_counter=0;
         BaseType_t queue_uart_status;
         int32_t spaces_queue;
         char charValue;
         char time_counter[2];
-        initiated=0;
+        //initiated=0;
         while (1)
         {
 
@@ -76,15 +69,16 @@ UartTaskReceive(void *pvParameters)
                     // Verifica se o caracter recebido é o caracter inicial
                     if (receivedChar == 'P')
                     {
-                        charP = 1;
+                        initial_char_p = 1;
                     }
                     // Verifica se o caracter recebido é o caracter final do packet
                     // E se for, envia o buffer preenchido para a queue
-                    if ((receivedChar == '\n' || receivedChar == '\r') && charP!=0 )
+                    if ((receivedChar == '\n' || receivedChar == '\r') && initial_char_p!=0 )
                     {
-
-                        if (date.second>0){
-                            charP = 0;
+                        // Se o sistema tiver iniciado
+                        // Adiciona um timestamp ao buffer recebido no uart
+                        if (initiated>0){
+                            initial_char_p = 0;
                             buffer[i+1] = '\0';
                             buffer[i+2]='_';
                             // Hours
@@ -147,7 +141,8 @@ UartTaskReceive(void *pvParameters)
                                 buffer[i+10]='_';
                                 buffer[i+11]='s';
                             }
-
+                            // Se a queue tiver espaço suficiente para escrever, escreve normalmente
+                            // Senão, primeiro retira-se um packet da queue para meter o novo
                             spaces_queue=uxQueueSpacesAvailable(uart_queue);
                             if ( spaces_queue < 1){
                                 xQueueReceive(uart_queue, &buffer_temp,portMAX_DELAY);
@@ -159,13 +154,13 @@ UartTaskReceive(void *pvParameters)
                             xQueueOverwrite(uart_queue_counter, &uart_counter);
                             i = 0;
                     }
-                        charP = 0;
+                        initial_char_p = 0;
                         i=0;
                         break;
                     }
 
                     // Armazena o caracter no buffer
-                    if (charP == 1)
+                    if (initial_char_p == 1)
                     {
                         i++;
                         buffer[i] = receivedChar;
@@ -202,17 +197,6 @@ UARTIntHandler(void)
 uint32_t
 UartTaskReceiveInit(void)
 {
-    /*
-    //
-    // Enable lazy stacking for interrupt handlers.  This allows floating-point
-    // instructions to be used within interrupt handlers, but at the expense of
-    // extra stack usage.
-    //
-    ROM_FPUEnable();
-    ROM_FPULazyStackingEnable();
-    */
-
-
 
     // UART
     UART_Init();

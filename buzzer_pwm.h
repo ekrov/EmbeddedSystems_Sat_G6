@@ -2,7 +2,7 @@
  * buzzer_pwm.h
  *
  *  Created on: 22/12/2023
- *      Author: carlo
+ *      Author: carlos and benny
  */
 
 #ifndef BUZZER_PWM_H_

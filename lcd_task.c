@@ -8,14 +8,19 @@
 
 #include "lcd_task.h"
 
-
 // Queue handles
-xQueueHandle g_pKeypadQueue;
-xQueueHandle g_pI2cTempQueue;
+// Keypad task will be read in this task, it is written by keypad task as it contains the latest keys written
+QueueHandle_t g_pKeypadQueue;
+// I2c temperature containing the latest temperature readings
+QueueHandle_t g_pI2cTempQueue;
+// Queue that stores the packets obtained in UART
 QueueHandle_t uart_queue;
+// Queue that stores the number of packets received
 QueueHandle_t uart_queue_counter;
+// Queue that stores the time since the time is initiated, in seconds
 QueueHandle_t xTimerQueue;
 
+// Semaphore handle for the buzzer, extern because it is used in several other tasks
 extern xSemaphoreHandle g_BuzzerSemaphore;
 
 int32_t packet_temp;
@@ -215,9 +220,8 @@ buf11 = ftoa(f, &status);
 Lcd_Write_String(buf11);
 }
 
-
-static void
-LCDTask(void *pvParameters)
+// Main task of the LCD
+static void LCDTask(void *pvParameters)
 {
     portTickType ui32WakeTime;
     uint32_t ui32LEDToggleDelay;
@@ -231,10 +235,7 @@ LCDTask(void *pvParameters)
     uint8_t i;
     uint8_t j;
     BaseType_t sucessfulReceived;
-    float Temperaturei2c;
-    float temp2=0;
-    float temp1=0;
-    float temp0=0;
+
     float packet_number_idk;
     char buffer[buffer_size];
     char buffer_all_matrix[20][buffer_size];
@@ -258,13 +259,11 @@ LCDTask(void *pvParameters)
     int16_t second_received=0;
 
     int8_t setup_time=0;
+    int8_t press_init_key=0;
+
     int8_t setup_date=1;
     int8_t flag_receiving_packet=0;
     initiated=0;
-    //
-    // Initialize the LED Toggle Delay to default value.
-    //
-    //ui32LEDToggleDelay = LED_TOGGLE_DELAY;
 
     //
     // Get the current tick count.
@@ -276,10 +275,14 @@ LCDTask(void *pvParameters)
     //
     while(1)
     {
+        // This not initiated section, represents the normal functioning of the system
+        // after it is initiated
         if (initiated!=0){
+            // If a key is received, its command is started
             if(xQueueReceive(g_pKeypadQueue, &TestKey, 1000) == pdPASS)
             {
-                if (TestKey>0){
+                // All commands show first the key pressed
+                if (TestKey>0 && TestKey!='A'){
                 taskENTER_CRITICAL();
 
                  Lcd_Clear();
@@ -294,58 +297,28 @@ LCDTask(void *pvParameters)
                      Lcd_Write_Char(TestKey);
                  }
                 taskEXIT_CRITICAL();
-
-                idk=0;
-               xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
-
                 }
 
-
+                // Each key has its corresponding command
                 switch(TestKey) {
+                // The command for key press 1 is showing the temperature, by peeking into the temperature queue
                   case 1:
-                      if(xQueueReceive(g_pI2cTempQueue, &Temperaturei2c, 100) == pdPASS)
-                      {
-                          taskENTER_CRITICAL();
-                          //dezenas
-                         temp2=Temperaturei2c/10;
-
-                         // unidades
-                         temp1=Temperaturei2c-((int) temp2*10);
-
-                         //decimal
-                         temp0= (int)temp1;
-                         temp0=temp1-temp0;
-                         temp0=temp0*10.0;
-                         temp0=round(temp0);
-
-                         Lcd_Write_Char(' ');
-                         Lcd_Write_Char('T');
-                         Lcd_Write_Char(':');
-                         Lcd_Write_Char(temp2+'0');
-                         Lcd_Write_Char(temp1+'0');
-                         Lcd_Write_Char('.');
-                         Lcd_Write_Char(temp0+'0');
-                          taskEXIT_CRITICAL();
-
-
-                          vTaskDelay( 1000 / portTICK_RATE_MS);
-
-
-                      }
-
-                    // code block
+                      temperature_display();
                     break;
+
+                    // The command for key press 2 is unlocking the buzzer task, by giving the semaphore it is trying to take
                   case 2:
-                    // code block
                       xSemaphoreGive(g_BuzzerSemaphore);
                       vTaskDelay( 1000 / portTICK_RATE_MS);
-
                     break;
+                  // The command for key press 3
+                  // This command displays the packet on the first position of the packet queue
                   case 3:
 
-                      //Recebe dados da fila
+                      //Receives the packet in the first position of the queue
                       sucessfulReceived = xQueueReceive(uart_queue, &buffer, 1000);
 
+                      // If a packet was read, displays the packet and shifts the LCD until it is all shown
                       if (sucessfulReceived == pdTRUE)
                       {
                           taskENTER_CRITICAL();
@@ -360,9 +333,8 @@ LCDTask(void *pvParameters)
                               vTaskDelay( 300 / portTICK_RATE_MS);
                               Lcd_Shift_Left();
                           }
-
-
                       }
+                      // If no packet was read from the queue, shows a error message
                       else
                       {
                           taskENTER_CRITICAL();
@@ -381,19 +353,19 @@ LCDTask(void *pvParameters)
                       }
                       vTaskDelay( 1000 / portTICK_RATE_MS);
 
-
-
                     break;
+                    // The command for the key press 4
+                    // Displays the number of received packets
+                    // This reads from the uart queue counter
+                    // that is incremented in the uart task
                   case 4:
                       xQueueReceive(uart_queue_counter, &uart_counter, 100);
                       taskENTER_CRITICAL();
                       Lcd_Clear();
                       Lcd_Write_String("Received pckts:");
-                      // Convert 123 to string [buf]
                       if (uart_counter>0){
                           sprintf(snum, "%d", uart_counter);
                       }
-                      //itoa(uart_counter, snum, 10);
                       for (i = 0; i < 5; i++)
                       {
                           snum_int=snum[i]-'0';
@@ -402,18 +374,17 @@ LCDTask(void *pvParameters)
                           }
 
                       }
-                      //Lcd_Write_String("        ");
                       taskEXIT_CRITICAL();
 
                       vTaskDelay( 1000 / portTICK_RATE_MS);
 
                       break;
-
+                  // The command for the key press 5
+                  // Displays the current time
                   case 5:
 
                       if(xQueuePeek(xTimerQueue, &counter, 100) == pdPASS)
                         {
-
                           if (counter>3600)
                               hour_received=(counter/3600);
                           else
@@ -436,7 +407,6 @@ LCDTask(void *pvParameters)
                         Lcd_Write_String("Time:");
 
                           sprintf(time_counter, "%d", date.hour);
-                          //itoa(uart_counter, snum, 10);
                           for (i = 0; i < 5; i++)
                           {
                               time_counter_int=time_counter[i]-'0';
@@ -448,7 +418,6 @@ LCDTask(void *pvParameters)
                           Lcd_Write_String("h ");
 
                           sprintf(time_counter, "%d", date.minute);
-                            //itoa(uart_counter, snum, 10);
                             for (i = 0; i < 5; i++)
                             {
                                 time_counter_int=time_counter[i]-'0';
@@ -460,7 +429,6 @@ LCDTask(void *pvParameters)
                             Lcd_Write_String("m ");
 
                             sprintf(time_counter, "%d", date.second);
-                            //itoa(uart_counter, snum, 10);
                             for (i = 0; i < 5; i++)
                             {
                                 time_counter_int=time_counter[i]-'0';
@@ -477,7 +445,11 @@ LCDTask(void *pvParameters)
                         }
 
                       break;
-
+                  // The command for key 6
+                  // Searches for a packet with the packet number inserted
+                  // This command gets the 20 packets inserted into the queue and puts it in a matrix
+                  // Then, the verifications of the packet numbers are done on the matrix itself, this is so no packet is
+                  // inserted into the matrix while we are checking it
                   case 6:
                       taskENTER_CRITICAL();
                       Lcd_Clear();
@@ -545,19 +517,6 @@ LCDTask(void *pvParameters)
                                                                            if (packet_temp==TestKey && flag_receiving_packet==1){
                                                                                vTaskDelay( 1 / portTICK_RATE_MS);
                                                                                //show packet on lcd
-                                                                             /* taskENTER_CRITICAL();
-                                                                              Lcd_Clear();
-                                                                              //for (i = 0; i < 20; i++)
-                                                                              //    Lcd_Write_Char(buffer[i]);
-                                                                              Lcd_Write_String("Packet nr :");
-                                                                              for (i = 4; i < 12; i++)
-                                                                               Lcd_Write_Char(buffer[i]);
-                                                                              //Lcd_Write_Float(packet_number);
-                                                                              //Lcd_Write_Char(packet_number_idk+'0');
-
-                                                                              taskEXIT_CRITICAL();
-                                                                            */
-
                                                                                taskENTER_CRITICAL();
                                                                                  Lcd_Clear();
                                                                                  Lcd_Write_String("Packet:");
@@ -573,16 +532,13 @@ LCDTask(void *pvParameters)
 
                                                                               vTaskDelay( 1000 / portTICK_RATE_MS);
                                                                               flag_receiving_packet=0;
-                                                                              idk=0;
-                                                                            xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
+
                                                                            }
                                                                        }
                                                                    }
                                                                }
-                                                               // if packet numbers != keys pressed
 
-                                                               // re-send the received buffer to queue to the back
-                                                               //xQueueSendToBack(uart_queue, &buffer, portMAX_DELAY);
+                                                              // If we still havent found the packet, displays the position we searched
                                                                if (flag_receiving_packet==1){
                                                                    taskENTER_CRITICAL();
                                                                    Lcd_Clear();
@@ -607,12 +563,10 @@ LCDTask(void *pvParameters)
                           }
                       }
 
-                       //vTaskDelay( 1000 / portTICK_RATE_MS);
-                       idk=0;
-                       xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
 
                       break;
-
+                  // The command for the key press 7 is similar to key 6
+                  // The difference is that it only shows the RSSI and the SNR instead of the whole packet
                   case 7:
                       taskENTER_CRITICAL();
                         Lcd_Clear();
@@ -690,8 +644,6 @@ LCDTask(void *pvParameters)
                                                                                 Lcd_Write_Char(':');
                                                                                 for (i = 39; i < 44; i++)
                                                                                  Lcd_Write_Char(buffer[i]);
-                                                                                //Lcd_Write_Float(packet_number);
-                                                                                //Lcd_Write_Char(packet_number_idk+'0');
 
                                                                                 taskEXIT_CRITICAL();
 
@@ -703,16 +655,13 @@ LCDTask(void *pvParameters)
 
                                                                               vTaskDelay( 1000 / portTICK_RATE_MS);
                                                                                 flag_receiving_packet=0;
-                                                                                idk=0;
-                                                                              xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
+                                                                                /*idk=0;
+                                                                              xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);*/
                                                                              }
                                                                          }
                                                                      }
                                                                  }
-                                                                 // if packet numbers != keys pressed
 
-                                                                 // re-send the received buffer to queue to the back
-                                                                 //xQueueSendToBack(uart_queue, &buffer, portMAX_DELAY);
                                                                  if (flag_receiving_packet==1){
                                                                      taskENTER_CRITICAL();
                                                                      Lcd_Clear();
@@ -737,16 +686,15 @@ LCDTask(void *pvParameters)
                             }
                         }
 
-                         //vTaskDelay( 1000 / portTICK_RATE_MS);
-                         idk=0;
-                         xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
+
 
                         break;
                   default:
                       vTaskDelay( 1 / portTICK_RATE_MS);
 
-                    // code block
                 }
+                // This is the default screen of the system
+                // It shows the time and the temperature
             }else{
                 if(xQueuePeek(xTimerQueue, &counter, 100) == pdPASS)
                 {
@@ -814,41 +762,18 @@ LCDTask(void *pvParameters)
                     Lcd_Write_Char('s');
                 taskEXIT_CRITICAL();
 
-                if(xQueueReceive(g_pI2cTempQueue, &Temperaturei2c, 100) == pdPASS)
-                  {
-                      taskENTER_CRITICAL();
-                      //dezenas
-                     temp2=Temperaturei2c/10;
+                temperature_display();
 
-                     // unidades
-                     temp1=Temperaturei2c-((int) temp2*10);
-
-                     //decimal
-                     temp0= (int)temp1;
-                     temp0=temp1-temp0;
-                     temp0=temp0*10.0;
-                     temp0=round(temp0);
-                     Lcd_Write_Char(' ');
-                     Lcd_Write_Char('T');
-                     Lcd_Write_Char(':');
-                     Lcd_Write_Char(temp2+'0');
-                     Lcd_Write_Char(temp1+'0');
-                     Lcd_Write_Char('.');
-                     Lcd_Write_Char(temp0+'0');
-                     Lcd_Write_Char(' ');
-                     Lcd_Write_Char('C');
-                      taskEXIT_CRITICAL();
-                  }
                 vTaskDelay( 100 / portTICK_RATE_MS);
                 }
             }
 
-
+        // This is the initial setup of the systems date, hour and where it waits for the start key
         }else{
 
-            if (setup_date==1){
 
-                // Start the system, by defining the date and the time
+            if (setup_date==1){
+                // Start the system, by defining the date
                 if (TestKey==200){
                     if (count_k_pressed<1 ){
                         taskENTER_CRITICAL();
@@ -862,7 +787,10 @@ LCDTask(void *pvParameters)
                     Lcd_Set_Cursor(1,(9+count_k_pressed));
                 }
 
-
+                // This section counts the number of keys pressed
+                // if one key was pressed, the inserted key was for the tens of the month
+                // if a second key was pressed, it represents the units of the month, and so on
+                // The TestKey variable is simply controling how many times the LCD is updated
                 if(xQueueReceive(g_pKeypadQueue, &TestKey, 1) == pdPASS)
                 {
                     if (TestKey<200){
@@ -872,7 +800,6 @@ LCDTask(void *pvParameters)
                              Lcd_Write_Char(TestKey + '0');
                              taskEXIT_CRITICAL();
                              count_k_pressed=count_k_pressed+1;
-
 
                              if (count_k_pressed==1){
                                  if (TestKey<2)
@@ -890,7 +817,6 @@ LCDTask(void *pvParameters)
                                          count_k_pressed=count_k_pressed-1;
                                  }
                              }
-
                              if (count_k_pressed==5)
                              {
                                      if (TestKey<4)
@@ -930,6 +856,7 @@ LCDTask(void *pvParameters)
                     count_k_pressed=8;
                 if (count_k_pressed==12)
                 {
+                    // If all keys were inserted, the setup goes to the next step, the time definition
                     setup_date=0;
                     setup_time=1;
                     count_k_pressed=0;
@@ -937,8 +864,9 @@ LCDTask(void *pvParameters)
 
                 }
             }
+            // Definition of time setup
             if(setup_time==1){
-                // Start the system, by defining the date and the time
+                // Start the system, by defining the time
                 if (TestKey==200){
                     if (count_k_pressed<1 ){
                         taskENTER_CRITICAL();
@@ -953,7 +881,8 @@ LCDTask(void *pvParameters)
                     Lcd_Set_Cursor(1,(9+count_k_pressed));
                 }
 
-
+                // This section, similarly for the date, defines the time
+                // This is based on the number of keys pressed
                 if(xQueueReceive(g_pKeypadQueue, &TestKey, 1) == pdPASS)
                 {
                     if (TestKey<200){
@@ -1010,10 +939,30 @@ LCDTask(void *pvParameters)
                     count_k_pressed=8;
                 if (count_k_pressed==10)
                 {
+                    // The next and final step of the setup is queued
+                    // Where it waits for the initial key press
                     setup_time=0;
-                    initiated=1;
-                    idk=0;
-                    xQueueSend(g_pKeypadQueue, &idk, 100 / portTICK_RATE_MS);
+                    press_init_key=1;
+                    TestKey=200;
+                    count_k_pressed=0;
+                }
+            }
+            // If the initial key is pressed, the system is initiated with the "initiated" control variable
+            if (press_init_key==1){
+                if (TestKey==200){
+                        taskENTER_CRITICAL();
+                        Lcd_Clear();
+                        Lcd_Write_String("Press A to start");
+                        taskEXIT_CRITICAL();
+                        TestKey=201;
+
+                }
+                if(xQueueReceive(g_pKeypadQueue, &TestKey, 1) == pdPASS)
+                {
+                    if (TestKey=='A')
+                    {
+                        initiated=1;
+                    }
                 }
             }
 
@@ -1048,10 +997,13 @@ LCDTaskInit(void)
    SysCtlDelay(2000);
    Lcd_Clear();
 
+   // The keypad queue is created, with 1 slots, storing the latest key pressed
    g_pKeypadQueue = xQueueCreate(KEYPAD_QUEUE_SIZE, KEYPAD_ITEM_SIZE);
+   // The temperature queue is created, storing the latest value, this is only accessed with peeks
    g_pI2cTempQueue = xQueueCreate(I2CTEMP_QUEUE_SIZE, I2CTEMP_ITEM_SIZE);
-   // Inicialização do uart_queue
+   // Initialization of the uart_queue that stores 20 packets
    uart_queue = xQueueCreate(UART_QUEUE_LENGTH, UART_SIZE);
+   // Initialization of the queue that counts how many packets are obtained
    uart_queue_counter = xQueueCreate(UART_QUEUE_counter_LENGTH, UART_counter_SIZE);
 
    // -- TIMER --
@@ -1061,17 +1013,12 @@ LCDTaskInit(void)
 
    // Configure Timer0
    Timer0A_Init();
-   /*
-   // Create the timer
-   TimerHandle_t xTimer = xTimerCreate("HardwareTimer", pdMS_TO_TICKS(1000), pdTRUE, 0, vTimerCallback);
 
-   // Start the timer
-   xTimerStart(xTimer, portMAX_DELAY);
-   */
-   // --
+   // This testKey is simply controlling how many times the LCD is updated
    TestKey=200;
    xQueueSend(g_pKeypadQueue, &TestKey, 100 / portTICK_RATE_MS);
 
+   // The uart counter queue is initiated with 0 packets received
    xQueueOverwrite(uart_queue_counter, &TestKey);
 
 
@@ -1096,4 +1043,40 @@ LCDTaskInit(void)
     // Success.
     //
     return(0);
+}
+
+void temperature_display(void){
+
+    float Temperaturei2c;
+    float temp2=0;
+    float temp1=0;
+    float temp0=0;
+
+    if(xQueuePeek(g_pI2cTempQueue, &Temperaturei2c, 100) == pdPASS)
+     {
+         taskENTER_CRITICAL();
+         //dezenas
+        temp2=Temperaturei2c/10;
+
+        // unidades
+        temp1=Temperaturei2c-((int) temp2*10);
+
+        //decimal
+        temp0= (int)temp1;
+        temp0=temp1-temp0;
+        temp0=temp0*10.0;
+        temp0=round(temp0);
+
+        Lcd_Write_Char(' ');
+        Lcd_Write_Char('T');
+        Lcd_Write_Char(':');
+        Lcd_Write_Char(temp2+'0');
+        Lcd_Write_Char(temp1+'0');
+        Lcd_Write_Char('.');
+        Lcd_Write_Char(temp0+'0');
+         taskEXIT_CRITICAL();
+
+         vTaskDelay( 1000 / portTICK_RATE_MS);
+     }
+
 }
